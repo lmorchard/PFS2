@@ -1,0 +1,15 @@
+.DS_Store
+.svn
+tmp
+build
+Thumbs.db
+*.bak
+*.pyc
+*.swp
+*.swo
+xfers/
+docs/api/
+logs/
+logs/*log
+httpd.conf
+.htaccess
