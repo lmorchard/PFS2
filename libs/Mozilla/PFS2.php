@@ -21,13 +21,13 @@ class Mozilla_PFS2
             'appVersion' => '',
             'appRelease' => '',
             'chromeLocale' => '',
-            'callback'=>''
+            'callback' => ''
         ));
 
         $callback = $params['callback'];
         unset($params['callback']);
 
-        $results = $this->lookup($params);
+        $out = $this->lookup($params);
 
         header('Content-Type: application/json');
 
@@ -258,7 +258,7 @@ class Mozilla_PFS2
     public function getParams($defaults)
     {
         $params = array();
-        foreach ($params as $name=>$default) {
+        foreach ($defaults as $name=>$default) {
             if (!empty($_POST[$name])) {
                 $params[$name] = $_POST[$name];
             } elseif (!empty($_GET[$name])) {
