@@ -285,7 +285,7 @@ class Mozilla_PFS2
      *
      * @return Mozilla_PFS2
      */
-    public function factory()
+    public static function factory()
     {
         return new self();
     }
