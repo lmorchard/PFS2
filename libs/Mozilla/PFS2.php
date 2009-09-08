@@ -8,6 +8,20 @@
  */
 class Mozilla_PFS2
 {
+    public static $release_fields = array(
+        'guid', 'version', 'xpi_location',
+        'installer_location', 'installer_hash', 'installer_shows_ui',
+        'manual_installation_url', 'license_url', 'needs_restart',
+        'min', 'max', 'xpcomabi', 'os_name', 'platform_key'
+    );
+
+    public static $mime_fields = array(
+        'name', 'description', 'suffixes'
+    );
+    
+    public static $platform_fields = array(
+        'app_id', 'app_release', 'app_version', 'locale'
+    );
 
     /**
      * Run as a web application.
@@ -24,12 +38,12 @@ class Mozilla_PFS2
             'callback' => ''
         ));
 
+        $params['mimetype'] = explode(' ', $params['mimetype']);
+
         $callback = $params['callback'];
         unset($params['callback']);
 
         $out = $this->lookup($params);
-
-        header('Content-Type: application/json');
 
         if ($callback) {
             header('Content-Type: text/javascript');
@@ -51,7 +65,7 @@ class Mozilla_PFS2
     }
 
     /**
-     *
+     * Perform DB lookup based on criteria from parameters
      */
     public function lookup($criteria)
     {
@@ -75,11 +89,12 @@ class Mozilla_PFS2
         // Establish the tables and columns to be selected.
         $select = array(
             'plugins' => array( 
-                'id', 'name', 'description', 'latest_version', 
+                'id', 'name', 'description', 'latest_release_id', 
                 'vendor', 'url', 'icon_url', 'license_url',
             ),
             'plugin_releases' => array(
-                'id', 'plugin_id', 'guid', 'filename', 'version', 'xpi_location',
+                'id', 'plugin_id', 'os_id', 'platform_id', 
+                'guid', 'filename', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui', 
                 'manual_installation_url', 'license_url', 'needs_restart', 'min', 
                 'max', 'xpcomabi', 'created', 'modified',
@@ -89,7 +104,6 @@ class Mozilla_PFS2
         $where = array(
             "`plugin_releases`.`plugin_id`=`plugins`.`id`"
         );
-
         $params = array();
         $join = array();
 
@@ -100,25 +114,17 @@ class Mozilla_PFS2
             $this->normalizeClientOS(@$criteria['clientOS'])
         );
         $join[] = join(' ', array(
-            "JOIN (`plugin_releases_oses`,`oses`)",
-            "ON (", join(" AND ", array(
-                "`plugin_releases_oses`.`plugin_release_id` = `plugin_releases`.`id`",
-                "`oses`.`id` = `plugin_releases_oses`.`os_id`",
-            )), ")"
+            "JOIN (`oses`)",
+            "ON (`oses`.`id` = `plugin_releases`.`os_id`)"
         ));
-        $where[] = join(' AND ', array(
-            "`oses`.`name` in (" . join(',', $client_oses) . ")",
-        ));
+        $where[] = "`oses`.`name` in (" . join(',', $client_oses) . ")";
 
         /*
          * Add a search for platform to SQL
          */
         $join[] = join(' ', array(
-            "JOIN (`platforms`, `plugin_releases_platforms`)",
-            "ON (", join(" AND ", array(
-                "`plugin_releases_platforms`.`plugin_release_id` = `plugin_releases`.`id`",
-                "`platforms`.`id` = `plugin_releases_platforms`.`platform_id`"
-            )), ")"
+            "JOIN (`platforms`)",
+            "ON (`platforms`.`id` = `plugin_releases`.`platform_id`)"
         ));
         $where[] = join(' AND ', array(
             "`platforms`.`app_id` in (?,'*')",
@@ -126,27 +132,34 @@ class Mozilla_PFS2
             "`platforms`.`app_release` in (?,'*')",
             "`platforms`.`locale` in (?,'*')",
         ));
-        $params += array(
+        $params = array_merge($params, array(
             @$criteria['appID'],
             @$criteria['appVersion'],
             @$criteria['appRelease'],
             @$criteria['chromeLocale'],
-        );
+        ));
 
         /*
          * Add a search for mimetype to SQL
          */
-        $join[] = join(' ', array(
-            "JOIN (`plugins_mimes`,`mimes`)",
-            "ON (", join(" AND ", array(
-                "`mimes`.`id` = `plugins_mimes`.`mime_id`",
-            )), ")"
-        ));
-        $where[] = join(' AND ', array(
-            "`plugins_mimes`.`plugin_id` = `plugins`.`id`",
-            "`mimes`.`name` = ?",
-        ));
-        $params[] = $criteria['mimetype'];    
+        if (!empty($criteria['mimetype'])) {
+
+            $mimetypes = $criteria['mimetype'];
+            if (!is_array($mimetypes)) {
+                $mimetypes = array($mimetypes);
+            }
+
+            $join[] = join(' ', array(
+                "JOIN (`plugins_mimes`,`mimes`)",
+                "ON (" . join(' AND ', array (
+                    "`mimes`.`id` = `plugins_mimes`.`mime_id`",
+                    "`plugins_mimes`.`plugin_id` = `plugin_releases`.`plugin_id`",
+                )) . ")"
+            ));
+            $where[] = "`mimes`.`name` in (" . str_repeat('?,', count($mimetypes)-1) . "?)";
+            $params = array_merge($params, $mimetypes);
+
+        }
 
         /* 
          * Prepare the list of columns for the select statement, as 
@@ -190,14 +203,28 @@ class Mozilla_PFS2
         $rv = $stmt->execute();
         call_user_func_array(array($stmt, 'bind_result'), $results);
 
+        /**
+         * Build a map of indexed columns to names.
+         */
+        $cols = array();
+        foreach ($select as $table=>$col_names) {
+            foreach ($col_names as $name) {
+                $cols[] = $name;
+            }
+        }
+
         /* 
          * Fetch all the rows and assemble the results.
          */
         $rows = array();
         while ($stmt->fetch()) {
-            $rows[] = array_merge(
-                $row['plugins'], $row['plugin_releases']
-            );
+            $row = array();
+            foreach ($cols as $idx => $name) {
+                if ('id' == $name) continue;
+                if (empty($results[$idx])) continue;
+                $row[$name] = $results[$idx];
+            }
+            $rows[] = $row;
         }
 
         $stmt->close();
@@ -386,62 +413,39 @@ class Mozilla_PFS2
         }
     }
 
-    public static $release_fields = array(
-        'guid', 'version', 'xpi_location',
-        'installer_location', 'installer_hash', 'installer_shows_ui',
-        'manual_installation_url', 'license_url', 'needs_restart',
-        'min', 'max', 'xpcomabi', 'os_name', 'platform_key'
-    );
-
-    public static $mime_fields = array(
-        'name', 'description', 'suffixes'
-    );
-    
-    public static $platform_fields = array(
-        'app_id', 'app_release', 'app_version', 'locale'
-    );
-
     /**
-     * Load records into the database.
+     * Load plugin into the database.
      */
-    public function loadData($data_fn_or_array)
+    public function loadPlugin($plugin)
     {
+        if (is_string($plugin)) {
+            $plugin = json_decode($plugin, true);
+        }
 
-        $plugin_insert = $this->db->prepareInsert(
+        $plugin_insert = $this->db->prepareInsertOrUpdate(
             'plugins', array(
-                'name', 'description', 'latest_version', 'vendor', 
+                'pfs_id', 'name', 'description', 'vendor', 
                 'url', 'icon_url', 'license_url'
             )
         );
 
-        $plugin_release_insert = $this->db->prepareInsert(
+        $plugin_release_insert = $this->db->prepareInsertOrUpdate(
             'plugin_releases', array(
-                'plugin_id', 'guid', 'version', 'xpi_location',
+                'plugin_id', 'os_id', 'platform_id', 
+                'guid', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui',
                 'manual_installation_url', 'license_url', 'needs_restart',
                 'min', 'max', 'xpcomabi', 'created', 'modified'
             )
         );
 
-        $plugin_release_oses_insert = $this->db->prepareInsert(
-            'plugin_releases_oses', array( 
-                'plugin_release_id', 'os_id' 
-            )
-        );
-
-        $plugins_mimes_insert = $this->db->prepareInsert(
+        $plugins_mimes_insert = $this->db->prepareInsertOrUpdate(
             'plugins_mimes', array( 
                 'plugin_id', 'mime_id' 
             )
         );
 
-        $plugin_releases_platforms_insert = $this->db->prepareInsert(
-            'plugin_releases_platforms', array(
-                'plugin_release_id','platform_id'
-            )
-        );
-
-        $mimes_insert = $this->db->prepareInsert(
+        $mimes_insert = $this->db->prepareInsertOrUpdate(
             'mimes', array(
                 'name', 'description', 'suffixes'
             )
@@ -449,10 +453,6 @@ class Mozilla_PFS2
 
         $os_lookup = $this->db->prepareStatement(
             'SELECT id FROM oses WHERE name=?', array('name')
-        );
-
-        $mime_lookup = $this->db->prepareStatement(
-            'SELECT id FROM mimes WHERE name=?', array('name')
         );
 
         $platform_lookup = $this->db->prepareStatement("
@@ -477,57 +477,40 @@ class Mozilla_PFS2
             'locale' => '*'
         );
 
-        if (is_array($data_fn_or_array)) {
-            $data = $data_fn_or_array;
-        } else if ($data_fn_or_array) {
-            $data = array();
-            include $data_fn_or_array;
+        $meta = array_merge($meta_defaults, $plugin['meta']);
+
+        $p_id = $plugin_insert->execute_finish($meta);
+
+        if (!empty($plugin['mimes'])) foreach ($plugin['mimes'] as $mime) {
+            $mime_id = $mimes_insert->execute_finish($mime);
+            $plugins_mimes_insert->execute_finish(array(
+                'plugin_id' => $p_id, 
+                'mime_id' => $mime_id
+            ));
         }
 
-        foreach ($data as $plugin) {
+        $release_ids = array();
+        if (!empty($plugin['releases'])) foreach ($plugin['releases'] as $release) {
 
-            $meta = array_merge($meta_defaults, $plugin['meta']);
-            $p_id = $plugin_insert->execute_finish($meta);
+            $release = array_merge($release_defaults, $meta, $release);
+            $release['plugin_id'] = $p_id;
 
-            foreach ($plugin['mimes'] as $mime) {
-                $mime_id = $mime_lookup->fetch_col(array(
-                    'name' => $mime['name']
-                ));
-                if (null == $mime_id) {
-                    $mime_id = $mimes_insert->execute_finish($mime);
-                }
-                $plugins_mimes_insert->execute_finish(array(
-                    'plugin_id' => $p_id, 
-                    'mime_id' => $mime_id
-                ));
-            }
+            $os_id = $os_lookup->fetch_col(array(
+                'name'=>$release['os_name']
+            ));
+            $release['os_id'] = $os_id;
 
-            foreach ($plugin['releases'] as $release) {
+            $platform_id = $platform_lookup->fetch_col(array_merge(
+                $platform_defaults, $release['platform']
+            ));
+            $release['platform_id'] = $platform_id;
 
-                $release = array_merge($release_defaults, $meta, $release);
-                $release['plugin_id'] = $p_id;
-                $pr_id = $plugin_release_insert->execute_finish($release);
-
-                $os_id = $os_lookup->fetch_col(array(
-                    'name'=>$release['os_name']
-                ));
-
-                $plugin_release_oses_insert->execute_finish(array(
-                    'plugin_release_id' => $pr_id, 
-                    'os_id' => $os_id
-                ));
-
-                $platform = array_merge($platform_defaults, $release['platform']);
-                $platform_id = $platform_lookup->fetch_col($platform);
-
-                $plugin_releases_platforms_insert->execute_finish(array(
-                    'plugin_release_id' => $pr_id, 
-                    'platform_id' => $platform_id
-                ));
-
-            }
+            $pr_id = $plugin_release_insert->execute_finish($release);
+            if ($pr_id) $release_ids[] = $pr_id;
 
         }
+
+        return array($p_id, $release_ids);
 
     }
 

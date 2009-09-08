@@ -1,0 +1,319 @@
+{
+    "meta": {
+        "vendor": "Apple", 
+        "pfs_id": "5-apple-quicktime", 
+        "platform": {
+            "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+        }, 
+        "url": "http://www.apple.com/quicktime/download/", 
+        "manual_installation_url": "http://www.apple.com/quicktime/download/", 
+        "name": "Apple Quicktime"
+    }, 
+    "releases": [
+        {
+            "guid": "{a42bb825-7eee-420f-8ee7-834062b6fefd}", 
+            "os_name": "win"
+        }, 
+        {
+            "guid": "{a42bb825-7eee-420f-8ee7-834062b6fefd}", 
+            "os_name": "mac"
+        }
+    ], 
+    "mimes": [
+        {
+            "suffixes": "sdp", 
+            "name": "application/sdp", 
+            "description": "SDP stream descriptor"
+        }, 
+        {
+            "suffixes": "sdp", 
+            "name": "application/x-sdp", 
+            "description": "SDP stream descriptor"
+        }, 
+        {
+            "suffixes": "rtsp,rts", 
+            "name": "application/x-rtsp", 
+            "description": "RTSP stream descriptor"
+        }, 
+        {
+            "suffixes": "mov,qt,mqv", 
+            "name": "video/quicktime", 
+            "description": "QuickTime Movie"
+        }, 
+        {
+            "suffixes": "flc,fli,cel", 
+            "name": "video/flc", 
+            "description": "AutoDesk Animator"
+        }, 
+        {
+            "suffixes": "wav,bwf", 
+            "name": "audio/x-wav", 
+            "description": "WAVE audio"
+        }, 
+        {
+            "suffixes": "wav,bwf", 
+            "name": "audio/wav", 
+            "description": "WAVE audio"
+        }, 
+        {
+            "suffixes": "aiff,aif,aifc,cdda", 
+            "name": "audio/aiff", 
+            "description": "AIFF audio"
+        }, 
+        {
+            "suffixes": "aiff,aif,aifc,cdda", 
+            "name": "audio/x-aiff", 
+            "description": "AIFF audio"
+        }, 
+        {
+            "suffixes": "au,snd,ulw", 
+            "name": "audio/basic", 
+            "description": "uLaw/AU audio"
+        }, 
+        {
+            "suffixes": "mid,midi,smf,kar", 
+            "name": "audio/mid", 
+            "description": "MIDI"
+        }, 
+        {
+            "suffixes": "mid,midi,smf,kar", 
+            "name": "audio/x-midi", 
+            "description": "MIDI"
+        }, 
+        {
+            "suffixes": "mid,midi,smf,kar", 
+            "name": "audio/midi", 
+            "description": "MIDI"
+        }, 
+        {
+            "suffixes": "qcp", 
+            "name": "audio/vnd.qcelp", 
+            "description": "QUALCOMM PureVoice audio"
+        }, 
+        {
+            "suffixes": "gsm", 
+            "name": "audio/x-gsm", 
+            "description": "GSM audio"
+        }, 
+        {
+            "suffixes": "AMR", 
+            "name": "audio/AMR", 
+            "description": "AMR audio"
+        }, 
+        {
+            "suffixes": "aac,adts", 
+            "name": "audio/aac", 
+            "description": "AAC audio"
+        }, 
+        {
+            "suffixes": "aac,adts", 
+            "name": "audio/x-aac", 
+            "description": "AAC audio"
+        }, 
+        {
+            "suffixes": "caf", 
+            "name": "audio/x-caf", 
+            "description": "CAF audio"
+        }, 
+        {
+            "suffixes": "ac3", 
+            "name": "audio/ac3", 
+            "description": "AC3 audio"
+        }, 
+        {
+            "suffixes": "ac3", 
+            "name": "audio/x-ac3", 
+            "description": "AC3 audio"
+        }, 
+        {
+            "suffixes": "qcp", 
+            "name": "audio/vnd.qcelp", 
+            "description": "QUALCOMM PureVoice audio"
+        }, 
+        {
+            "suffixes": "mpeg,mpg,m1s,m1v,m1a,m75,m15,mp2,mpm,mpv,mpa", 
+            "name": "video/x-mpeg", 
+            "description": "MPEG media"
+        }, 
+        {
+            "suffixes": "mpeg,mpg,m1s,m1v,m1a,m75,m15,mp2,mpm,mpv,mpa", 
+            "name": "video/mpeg", 
+            "description": "MPEG media"
+        }, 
+        {
+            "suffixes": "mpeg,mpg,m1s,m1a,mp2,mpm,mpa,m2a", 
+            "name": "audio/mpeg", 
+            "description": "MPEG audio"
+        }, 
+        {
+            "suffixes": "mpeg,mpg,m1s,m1a,mp2,mpm,mpa,m2a", 
+            "name": "audio/x-mpeg", 
+            "description": "MPEG audio"
+        }, 
+        {
+            "suffixes": "3gp,3gpp", 
+            "name": "video/3gpp", 
+            "description": "3GPP media"
+        }, 
+        {
+            "suffixes": "3gp,3gpp", 
+            "name": "audio/3gpp", 
+            "description": "3GPP media"
+        }, 
+        {
+            "suffixes": "3g2,3gp2", 
+            "name": "video/3gpp2", 
+            "description": "3GPP2 media"
+        }, 
+        {
+            "suffixes": "3g2,3gp2", 
+            "name": "audio/3gpp2", 
+            "description": "3GPP2 media"
+        }, 
+        {
+            "suffixes": "sdv", 
+            "name": "video/sd-video", 
+            "description": "SD video"
+        }, 
+        {
+            "suffixes": "amc", 
+            "name": "application/x-mpeg", 
+            "description": "AMC media"
+        }, 
+        {
+            "suffixes": "mp4", 
+            "name": "video/mp4", 
+            "description": "MPEG-4 media"
+        }, 
+        {
+            "suffixes": "mp4", 
+            "name": "audio/mp4", 
+            "description": "MPEG-4 media"
+        }, 
+        {
+            "suffixes": "m4a", 
+            "name": "audio/x-m4a", 
+            "description": "AAC audio"
+        }, 
+        {
+            "suffixes": "m4p", 
+            "name": "audio/x-m4p", 
+            "description": "AAC audio"
+        }, 
+        {
+            "suffixes": "m4b", 
+            "name": "audio/x-m4b", 
+            "description": "AAC audio book"
+        }, 
+        {
+            "suffixes": "m4v", 
+            "name": "video/x-m4v", 
+            "description": "Video"
+        }, 
+        {
+            "suffixes": "mp3,swa", 
+            "name": "audio/mpeg", 
+            "description": "MP3 audio"
+        }, 
+        {
+            "suffixes": "mp3,swa", 
+            "name": "audio/x-mpeg", 
+            "description": "MP3 audio"
+        }, 
+        {
+            "suffixes": "mp3,swa", 
+            "name": "audio/mp3", 
+            "description": "MP3 audio"
+        }, 
+        {
+            "suffixes": "mp3,swa", 
+            "name": "audio/x-mp3", 
+            "description": "MP3 audio"
+        }, 
+        {
+            "suffixes": "mp3,swa", 
+            "name": "audio/mpeg3", 
+            "description": "MP3 audio"
+        }, 
+        {
+            "suffixes": "mp3,swa", 
+            "name": "audio/x-mpeg3", 
+            "description": "MP3 audio"
+        }, 
+        {
+            "suffixes": "bmp,dib", 
+            "name": "image/x-bmp", 
+            "description": "BMP image"
+        }, 
+        {
+            "suffixes": "pntg,pnt,mac", 
+            "name": "image/x-macpaint", 
+            "description": "MacPaint image"
+        }, 
+        {
+            "suffixes": "pict,pic,pct", 
+            "name": "image/pict", 
+            "description": "PICT image"
+        }, 
+        {
+            "suffixes": "pict,pic,pct", 
+            "name": "image/x-pict", 
+            "description": "PICT image"
+        }, 
+        {
+            "suffixes": "png", 
+            "name": "image/png", 
+            "description": "PNG image"
+        }, 
+        {
+            "suffixes": "png", 
+            "name": "image/x-png", 
+            "description": "PNG image"
+        }, 
+        {
+            "suffixes": "qtif,qti", 
+            "name": "image/x-quicktime", 
+            "description": "QuickTime image"
+        }, 
+        {
+            "suffixes": "sgi,rgb", 
+            "name": "image/x-sgi", 
+            "description": "SGI image"
+        }, 
+        {
+            "suffixes": "targa,tga", 
+            "name": "image/x-targa", 
+            "description": "TGA image"
+        }, 
+        {
+            "suffixes": "tif,tiff", 
+            "name": "image/tiff", 
+            "description": "TIFF image"
+        }, 
+        {
+            "suffixes": "tif,tiff", 
+            "name": "image/x-tiff", 
+            "description": "TIFF image"
+        }, 
+        {
+            "suffixes": "jp2", 
+            "name": "image/jp2", 
+            "description": "JPEG2000 image"
+        }, 
+        {
+            "suffixes": "jp2", 
+            "name": "image/jpeg2000", 
+            "description": "JPEG2000 image"
+        }, 
+        {
+            "suffixes": "jp2", 
+            "name": "image/jpeg2000-image", 
+            "description": "JPEG2000 image"
+        }, 
+        {
+            "suffixes": "jp2", 
+            "name": "image/x-jpeg2000-image", 
+            "description": "JPEG2000 image"
+        }
+    ]
+}

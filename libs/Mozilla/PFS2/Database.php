@@ -56,6 +56,33 @@ class Mozilla_PFS2_Database extends Database
     }
 
     /**
+     * Prepare an INSERT / UPDATE statement for the given named table 
+     * and list of field names.
+     *
+     * @param string Name of DB table for insert
+     * @param array  List of field names for bind parameters
+     * @return Mozilla_PFS2_Database_Statement
+     */
+    public function prepareInsertOrUpdate($table, $field_names)
+    {
+        return new Mozilla_PFS2_Database_Statement(
+            $this, join(' ', array(
+                "INSERT INTO {$table}",
+                "(" . join(',', $field_names) . ")",
+                "VALUES",
+                "(" . str_repeat('?,', count($field_names)-1) . "?)",
+                "ON DUPLICATE KEY UPDATE",
+                "id=LAST_INSERT_ID(id),",
+                join(', ', array_map(
+                    create_function('$a', 'return "$a=?";'),
+                    $field_names
+                ))
+            )),
+            array_merge($field_names, $field_names)
+        );
+    }
+
+    /**
      * Return a DB statement for the given SQL and field names.
      *
      * @param string SQL to be prepared as a statement

@@ -554,3 +554,10 @@ $data[] = array (
     ),
 );
 
+foreach ($data as $idx=>$plugin) {
+    $fn = $idx . '-' .$plugin['meta']['name'];
+    $fn = str_replace(' ', '-', strtolower($fn));
+    $plugin['meta']['pfs_id'] = $fn;
+    $data[$idx] = $plugin;
+    file_put_contents($fn.'.json', json_encode($plugin));
+}

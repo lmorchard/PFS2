@@ -1,0 +1,26 @@
+{
+    "meta": {
+        "name": "VideoEgg Publisher", 
+        "manual_installation_url": "http://www.videoegg.com/", 
+        "icon_url": "http://videoegg.com/favicon.ico", 
+        "platform": {
+            "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+        }, 
+        "installer_shows_ui": "true", 
+        "guid": "{b8b881f0-2e07-11db-a98b-0800200c9a66}", 
+        "xpi_location": "http://update.videoegg.com/Install/Windows/Initial/VideoEggPublisher.xpi", 
+        "pfs_id": "12-videoegg-publisher"
+    }, 
+    "releases": [
+        {
+            "os_name": "win"
+        }
+    ], 
+    "mimes": [
+        {
+            "suffixes": "", 
+            "name": "application/x-videoegg-loader", 
+            "description": ""
+        }
+    ]
+}

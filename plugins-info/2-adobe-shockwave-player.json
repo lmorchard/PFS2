@@ -1,0 +1,33 @@
+{
+    "meta": {
+        "vendor": "Adobe", 
+        "name": "Adobe Shockwave Player", 
+        "platform": {
+            "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+        }, 
+        "url": "http://www.adobe.com/go/getshockwave/", 
+        "manual_installation_url": "http://www.adobe.com/go/getshockwave/", 
+        "version": "10.1", 
+        "license_url": "http://www.adobe.com/go/eula_shockwaveplayer", 
+        "pfs_id": "2-adobe-shockwave-player"
+    }, 
+    "releases": [
+        {
+            "guid": "{45f2a22c-4029-4209-8b3d-1421b989633f}", 
+            "xpi_location": "https://www.macromedia.com/go/xpi_shockwaveplayer_win", 
+            "os_name": "win"
+        }, 
+        {
+            "guid": "{49141640-b629-4d57-a539-b521c4a99eff}", 
+            "xpi_location": "https://www.macromedia.com/go/xpi_shockwaveplayer_macosx", 
+            "os_name": "mac"
+        }
+    ], 
+    "mimes": [
+        {
+            "suffixes": "dcr,dxr", 
+            "name": "application/x-director", 
+            "description": "Adobe Shockwave Player"
+        }
+    ]
+}
