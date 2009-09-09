@@ -9,7 +9,7 @@
         "installer_shows_ui": "true", 
         "guid": "{b8b881f0-2e07-11db-a98b-0800200c9a66}", 
         "xpi_location": "http://update.videoegg.com/Install/Windows/Initial/VideoEggPublisher.xpi", 
-        "pfs_id": "12-videoegg-publisher"
+        "pfs_id": "videoegg-publisher"
     }, 
     "releases": [
         {

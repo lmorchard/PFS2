@@ -104,8 +104,10 @@ CREATE TABLE `plugin_releases` (
     `min` varchar(255) default NULL,
     `max` varchar(255) default NULL,
     `xpcomabi` varchar(255) default NULL,
-    `created` datetime NOT NULL,
-    `modified` datetime NOT NULL,
+    `has_vulnerability` tinyint(1) default 0,
+    `vulnerability_description` TEXT NULL,
+    `vulnerability_url` varchar(255) default NULL,
+    `modified` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `unique_release` (`plugin_id`, `os_id`, `platform_id`, `version`),
     FOREIGN KEY (`plugin_id`) REFERENCES plugins(`id`) ON DELETE CASCADE

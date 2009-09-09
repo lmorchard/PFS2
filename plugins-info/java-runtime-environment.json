@@ -1,7 +1,7 @@
 {
     "meta": {
         "vendor": "Sun Microsystems", 
-        "pfs_id": "6-java-runtime-environment", 
+        "pfs_id": "java-runtime-environment", 
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         }, 

@@ -1,0 +1,46 @@
+Yet Another Database Class
+--------------------------
+
+This is a database interface library built for Mozilla's needs, 
+specifically multiple shadow databases and memcache servers, all transparent to the
+application.  This library is designed to be checked out as an SVN External for your
+project.  When checking out, use a specific revision instead of HEAD as there are no
+trunk/tag versions.
+
+REQUIREMENTS:
+    - PHP5 + memcached libraries
+    - PHPUnit if you want to run the tests
+
+TESTS:
+    mysql tests < tests/tests.sql
+    cp config.php-dist tests/config.php
+    cd tests/
+    vi config.php
+    phpunit DatabaseTest.php
+
+EXAMPLES (more in the tests file):
+
+    // Setup the library. Array formats are specified in the class and config.php-dist
+        try {
+            $db = new Database();
+            $db->primary_config  = $primary_config;
+            $db->shadow_config   = $shadow_config;
+            $db->memcache_config = $memcache_config;
+            $db->connectAll();
+        } catch (Exception $e) {
+            error_log('DB Error: '.$e->getMessage());
+        }
+
+    // Retrieve a result from any database and store it in memcache for next time.
+    $result = $db->query('SELECT * FROM table');
+
+    // Retrieve a result from the shadow database, DO NOT store it in memcache.
+    $result = $db->query('SELECT * FROM table', array(Database::DATABASE_SHADOW));
+
+LIMITATIONS:
+    If you want to use memcache, you don't get to use any of the fancy mysqli stuff
+    like prepared statements.  To access the db handle directly use:
+
+        $db->getHandle(Database::DATABASE_PRIMARY);
+
+Questions? Email clouserw at mozilla.com

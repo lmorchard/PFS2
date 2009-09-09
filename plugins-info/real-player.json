@@ -8,7 +8,7 @@
         "url": "http://www.real.com", 
         "manual_installation_url": "http://www.real.com/", 
         "version": "10.5", 
-        "pfs_id": "4-real-player"
+        "pfs_id": "real-player"
     }, 
     "releases": [
         {

@@ -9,4 +9,5 @@
 define('ENV', 'prod');
 define('APPPATH', dirname(dirname(__FILE__)));
 include_once APPPATH.'/libs/Mozilla/PFS2.php';
-Mozilla_PFS2::factory()->run();
+$app = new Mozilla_PFS2();
+$app->run();

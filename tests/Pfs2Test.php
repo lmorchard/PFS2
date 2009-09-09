@@ -48,6 +48,7 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
 
         $plugin_update = array(
             'meta' => array(
+                "pfs_id" => "real-player",
                 "vendor" => "Real Networks", 
                 "name" => "New Ultra Fake Player", 
                 "platform" => array(
@@ -56,7 +57,6 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
                 "url" => "http://www.real.com", 
                 "manual_installation_url" => "http://www.real.com/", 
                 "version" => "10.5", 
-                "pfs_id" => "4-real-player"
             )
         );
 

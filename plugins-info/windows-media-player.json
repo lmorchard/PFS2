@@ -8,7 +8,7 @@
         "url": "http://port25.technet.com/pages/windows-media-player-firefox-plugin-download.aspx", 
         "manual_installation_url": "http://port25.technet.com/pages/windows-media-player-firefox-plugin-download.aspx", 
         "guid": "{cff1240a-fd24-4b9f-8183-ccd96e5300d0}", 
-        "pfs_id": "9-windows-media-player"
+        "pfs_id": "windows-media-player"
     }, 
     "releases": [
         {

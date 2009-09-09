@@ -1,0 +1,63 @@
+<?php
+/**
+ * Database configuration file for YADBC.  These are the formats that the classes are
+ * expecting.  Copy the contents of this file and append to your configuration file
+ * to use YADBC.
+ * @author Wil Clouser <clouserw@mozilla.com>
+ */
+
+/**
+ * Primary database configuration
+ */
+$primary_database = array(
+    'hostname' => 'localhost',
+    'port'     => 3306,
+    'username' => '',
+    'password' => '',
+    'database' => ''
+);
+
+/**
+ * Shadow database configuration.  Accepts multiple shadows.  Weight MUST be non-zero
+ * and weights across all the shadows MUST add up to 100.
+ */
+$shadow_databases = array(
+    0 => array(
+        'hostname' => 'localhost',
+        'port'     => 3306,
+        'username' => '',
+        'password' => '',
+        'database' => '',
+        'weight'   => 0
+    )
+);
+
+/**
+ * Memcache configuration.  Accepts multiple servers, indexed by host.  Weight is the
+ * number of chances that the server will be chosen relative to all others.  More
+ * documentation is found at http://php.oregonstate.edu/manual/en/function.Memcache-addServer.php
+ */
+$memcache_config = array(
+    'localhost' => array(
+       'port'           => '11211',
+       'persistent'     => true,
+       'weight'         => '1',
+       'timeout'        => '1',
+       'retry_interval' => 15
+    )
+);
+
+/**
+ * A prefix for the keys in memcache (essentially a namespace).  Useful for purging.
+ * Default: AUS_
+ */
+define('MEMCACHE_PREFIX', 'AUS_');
+
+/**
+ * The amount of time to store elements in the memcache servers.  Measured in
+ * seconds.
+ * Default: 60
+ */
+define('MEMCACHE_TIMEOUT', 60);
+
+?>

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__) . '/App.php';
 /**
  * Main class for PFS2 application
  *
@@ -6,7 +7,7 @@
  * @subpackage libraries
  * @author     lorchard@mozilla.com
  */
-class Mozilla_PFS2
+class Mozilla_PFS2 extends Mozilla_App
 {
     public static $release_fields = array(
         'guid', 'version', 'xpi_location',
@@ -89,23 +90,45 @@ class Mozilla_PFS2
         // Establish the tables and columns to be selected.
         $select = array(
             'plugins' => array( 
-                'id', 'name', 'description', 'latest_release_id', 
+                'pfs_id', 'id', 'name', 'description', 'latest_release_id', 
                 'vendor', 'url', 'icon_url', 'license_url',
             ),
             'plugin_releases' => array(
+                'has_vulnerability', 'vulnerability_url', 'vulnerability_description',
                 'id', 'plugin_id', 'os_id', 'platform_id', 
                 'guid', 'filename', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui', 
                 'manual_installation_url', 'license_url', 'needs_restart', 'min', 
-                'max', 'xpcomabi', 'created', 'modified',
+                'max', 'xpcomabi', 
+                'modified',
+            ),
+            'platforms' => array(
+                'app_id', 'app_release', 'app_version', 'locale'
+            ),
+            'oses' => array(
+                'name' => 'os_name'
             ),
         );
-        $from  = array_keys($select);
+        $from  = array('plugins','plugin_releases');
         $where = array(
             "`plugin_releases`.`plugin_id`=`plugins`.`id`"
         );
         $params = array();
         $join = array();
+        $group_by = array(
+            '`plugin_releases`.`id`',
+        );
+
+        // HACK: (kind of) Since '*' sorts last in the list, this is roughly a 
+        // relevance sort for platforms and OS
+        $order_by = array(
+            "`plugin_releases`.`version` DESC", 
+            "`oses`.`name` DESC", 
+            "`platforms`.`locale` DESC", 
+            "`platforms`.`app_id` DESC",
+            "`platforms`.`app_version` DESC", 
+            "`platforms`.`app_release` DESC"
+        );
 
         /*
          * Add client OS criteria to the SQL
@@ -142,24 +165,20 @@ class Mozilla_PFS2
         /*
          * Add a search for mimetype to SQL
          */
-        if (!empty($criteria['mimetype'])) {
-
-            $mimetypes = $criteria['mimetype'];
-            if (!is_array($mimetypes)) {
-                $mimetypes = array($mimetypes);
-            }
-
-            $join[] = join(' ', array(
-                "JOIN (`plugins_mimes`,`mimes`)",
-                "ON (" . join(' AND ', array (
-                    "`mimes`.`id` = `plugins_mimes`.`mime_id`",
-                    "`plugins_mimes`.`plugin_id` = `plugin_releases`.`plugin_id`",
-                )) . ")"
-            ));
-            $where[] = "`mimes`.`name` in (" . str_repeat('?,', count($mimetypes)-1) . "?)";
-            $params = array_merge($params, $mimetypes);
-
+        $mimetypes = $criteria['mimetype'];
+        if (!is_array($mimetypes)) {
+            $mimetypes = array($mimetypes);
         }
+
+        $join[] = join(' ', array(
+            "JOIN (`plugins_mimes`,`mimes`)",
+            "ON (" . join(' AND ', array (
+                "`mimes`.`id` = `plugins_mimes`.`mime_id`",
+                "`plugins_mimes`.`plugin_id` = `plugin_releases`.`plugin_id`",
+            )) . ")"
+        ));
+        $where[] = "`mimes`.`name` in (" . str_repeat('?,', count($mimetypes)-1) . "?)";
+        $params = array_merge($params, $mimetypes);
 
         /* 
          * Prepare the list of columns for the select statement, as 
@@ -169,10 +188,19 @@ class Mozilla_PFS2
         $columns = array();
         $row     = array();
         $results = array();
+        $names   = array();
         foreach ($select as $table => $col_names) {
             $row_table = array();
-            foreach ($col_names as $col_name) {
-                $cols[] = "`{$table}`.`{$col_name}`";
+            foreach ($col_names as $idx=>$col_name) {
+                if (!is_numeric($idx)) {
+                    // Non-numeric index indicates a column name alias.
+                    $names[] = $col_name;
+                    $col_name = $idx;
+                } else {
+                    // Otherwise, the result name is the same as the column name.
+                    $names[] = $col_name;
+                }
+                $columns[] = "`{$table}`.`{$col_name}`";
                 $row_table[$col_name] = null;
                 $results[] = &$row_table[$col_name];
             }
@@ -183,10 +211,12 @@ class Mozilla_PFS2
          * Finally, assemble the SQL source.
          */
         $sql = join("\n", array(
-            'SELECT ' . join(', ', $cols),
+            'SELECT ' . join(', ', $columns),
             'FROM ' . join(', ', array_map($bt_quote, $from)),
             join("\n", $join),
-            'WHERE ' . join(' AND ', array_map($parens, $where))
+            'WHERE ' . join(' AND ', array_map($parens, $where)),
+            'GROUP BY ' . join(', ', $group_by),
+            'ORDER BY ' . join(', ', $order_by),
         ));
 
         /*
@@ -203,33 +233,79 @@ class Mozilla_PFS2
         $rv = $stmt->execute();
         call_user_func_array(array($stmt, 'bind_result'), $results);
 
-        /**
-         * Build a map of indexed columns to names.
-         */
-        $cols = array();
-        foreach ($select as $table=>$col_names) {
-            foreach ($col_names as $name) {
-                $cols[] = $name;
-            }
-        }
-
         /* 
-         * Fetch all the rows and assemble the results.
+         * Fetch all the rows and assemble the results.  
+         *
+         * Note that plain column names are used here, rather than 
+         * fully-qualified table.column names.  This is so that column values 
+         * from the plugins table are overwritten by non-empty columns from the 
+         * plugin_releases table, offering a sort of inheritance relationship.
          */
         $rows = array();
         while ($stmt->fetch()) {
             $row = array();
-            foreach ($cols as $idx => $name) {
+            foreach ($names as $idx => $name) {
+                
+                // Skip DB IDs, but pfs_id is okay.
                 if ('id' == $name) continue;
+                if ('pfs_id' != $name && 
+                    strpos($name, '_id') == strlen($name)-3) continue;
+                
+                // Omit empty columns.
                 if (empty($results[$idx])) continue;
-                $row[$name] = $results[$idx];
+
+                if (in_array($name, array('created', 'modified'))) {
+                    $row[$name] = gmdate('c', strtotime($results[$idx]));
+                } else {
+                    $row[$name] = $results[$idx];
+                }
             }
             $rows[] = $row;
         }
-
         $stmt->close();
 
+        /*
+         * Prune the rows down to the single most relevant plugin record for
+         * each pfs_id and plugin version pair.
+         *
+         * This might be better done in MySQL, but couldn't quite figure
+         * out how to do it all in SQL.
+         */
+        $prune = array();
+        foreach ($rows as $row) {
+            // Collect rows using a key made up of pfs_id and plugin version
+            $prune_id = join(':', array(
+                @$row['pfs_id'], @$row['version']
+            ));
+            if (empty($prune[$prune_id])) {
+                // Don't have a plugin for this key yet, so just store it.
+                $prune[$prune_id] = $row;
+            } else {
+                // Replace the plugin we have, if this new one is more relevant.
+                $curr_rel = $this->_calcRelevance($prune[$prune_id]);
+                $new_rel = $this->_calcRelevance($row);
+                if ($new_rel > $curr_rel) {
+                    $prune[$prune_id] = $row;
+                }
+            }
+        }
+
+        $rows = array_values($prune);
+
         return $rows;
+    }
+
+    /**
+     * Calculate result relevance, based on the number of OS / Platform columns 
+     * that are not wildcards.
+     */
+    public function _calcRelevance($row) {
+        $rel = 0;
+        $cols = array('os_name', 'app_id', 'app_release', 'app_version', 'locale');
+        foreach ($cols as $name) {
+            if ('*' !== $row[$name]) $rel++;
+        }
+        return $rel;
     }
 
     /**
@@ -277,143 +353,6 @@ class Mozilla_PFS2
     }
 
     /**
-     * Get parameters with a set of supplied defaults.
-     *
-     * @param  array Set of expected parameters and defaults
-     * @return array
-     */
-    public function getParams($defaults)
-    {
-        $params = array();
-        foreach ($defaults as $name=>$default) {
-            if (!empty($_POST[$name])) {
-                $params[$name] = $_POST[$name];
-            } elseif (!empty($_GET[$name])) {
-                $params[$name] = $_GET[$name];
-            } else {
-                $params[$name] = $default;
-            }
-        }
-        return $params;
-    }
-
-    /**
-     * Constructor, initialize the application environment.
-     */
-    public function __construct($config_data_or_fn=null)
-    {
-        $this->loadConfig($config_data_or_fn);
-        $this->setupAutoLoader();
-        $this->setupDatabase();
-    }
-
-    /**
-     * Construct and return an instance of this class.
-     *
-     * @return Mozilla_PFS2
-     */
-    public static function factory()
-    {
-        return new self();
-    }
-
-    /**
-     * Set up the include path and register the autoloader.
-     */
-    public function setupAutoLoader()
-    {
-        // Set up an include path that covers libs and vendors
-        set_include_path(join(PATH_SEPARATOR, array_merge(
-            array(APPPATH.'/libs'),
-            glob(APPPATH.'/vendors/*', GLOB_ONLYDIR),
-            array(get_include_path())
-        )));
-
-        // Set up the class namespace autoloader.
-        spl_autoload_register(array($this, 'autoload'));
-    }
-
-    /**
-     * Class autoloader, transforms underscores to path separators.
-     *
-     * @param string Class name
-     * @return boolean Class was loaded.
-     */
-    public function autoload($class)
-    {
-        $file = str_replace('_', '/', $class);
-        require_once $file . '.php';
-        return TRUE;
-    }
-
-    /**
-     * Get a config setting, with default.
-     *
-     * @param  string Config setting key
-     * @param  mixed  Default value if key not set
-     * @return mixed
-     */
-    public function getConfig($name, $default=null)
-    {
-        return isset($this->config[$name]) ?
-            $this->config[$name] : $default;
-    }
-
-    /**
-     * Load a config file.
-     *
-     * @param mixed Name of a config file or an array of config settings
-     */
-    public function loadConfig($config_data_or_fn=null) 
-    {
-        if (null == $config_data_or_fn) {
-            $config_data_or_fn = APPPATH . '/conf/config.php';
-        }
-        if (is_array($config_data_or_fn)) {
-            $this->config = $config_data_or_fn;
-        } else if ($config_data_or_fn) {
-            $config = array();
-            require $config_data_or_fn;
-            $this->config = $config;
-        }
-        return $this->config;
-    }
-
-    /**
-     * Connect to the database specified in the config.
-     */
-    public function setupDatabase()
-    {
-        $this->db = new Mozilla_PFS2_Database();
-        $this->db->primary_config  = $this->getConfig('primary_database');
-        $this->db->shadow_config   = $this->getConfig('shadow_databases');
-        $this->db->memcache_config = $this->getConfig('memcache_config');
-        $this->db->connectAll();
-    }
-
-    /**
-     * Load the database with the schema file specified by 'db_schema' in 
-     * config, or APPPATH/conf/schema.sql by default.
-     */
-    public function resetDatabase()
-    {
-        $fn = $this->getConfig('db_schema', APPPATH . '/conf/schema.sql');
-        $sql = file_get_contents($fn);
-        $parts = explode(';', $sql);
-
-        foreach ($parts as $part) {
-            $part = trim($part);
-            if (!$part) continue;
-            try {
-                $this->db->query($part.';');
-            } catch (Exception $e) {
-                echo "$part\n";
-                throw $e;
-            }
-        }
-    }
-
-    /**
      * Load plugin into the database.
      */
     public function loadPlugin($plugin)
@@ -435,7 +374,9 @@ class Mozilla_PFS2
                 'guid', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui',
                 'manual_installation_url', 'license_url', 'needs_restart',
-                'min', 'max', 'xpcomabi', 'created', 'modified'
+                'min', 'max', 'xpcomabi', 
+                'has_vulnerability', 'vulnerability_url', 'vulnerability_description',
+                'modified'
             )
         );
 
@@ -448,6 +389,18 @@ class Mozilla_PFS2
         $mimes_insert = $this->db->prepareInsertOrUpdate(
             'mimes', array(
                 'name', 'description', 'suffixes'
+            )
+        );
+
+        $platforms_insert = $this->db->prepareInsertOrUpdate(
+            'platforms', array(
+                'app_id', 'app_release', 'app_version', 'locale'
+            )
+        );
+
+        $oses_insert = $this->db->prepareInsertOrUpdate(
+            'oses', array(
+                'name'
             )
         );
 
@@ -500,10 +453,15 @@ class Mozilla_PFS2
             ));
             $release['os_id'] = $os_id;
 
-            $platform_id = $platform_lookup->fetch_col(array_merge(
+            $platform_id = $platforms_insert->execute_finish(array_merge(
                 $platform_defaults, $release['platform']
             ));
             $release['platform_id'] = $platform_id;
+
+            if (!empty($release['vulnerability_description']) ||
+                    !empty($release['vulnerability_url'])) {
+                $release['has_vulnerability'] = 1;
+            }
 
             $pr_id = $plugin_release_insert->execute_finish($release);
             if ($pr_id) $release_ids[] = $pr_id;

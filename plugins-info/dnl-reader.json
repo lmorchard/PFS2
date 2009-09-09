@@ -10,7 +10,7 @@
         "installer_shows_ui": "false", 
         "guid": "{ce9317a3-e2f8-49b9-9b3b-a7fb5ec55161}", 
         "xpi_location": "http://digitalwebbooks.com/reader/xpinst.xpi", 
-        "pfs_id": "11-dnl-reader"
+        "pfs_id": "dnl-reader"
     }, 
     "releases": [
         {

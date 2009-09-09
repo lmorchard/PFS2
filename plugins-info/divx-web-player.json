@@ -9,7 +9,7 @@
         "license_url": "http://go.divx.com/plugin/license/", 
         "installer_shows_ui": "false", 
         "guid": "{a8b771f0-2e07-11db-a98b-0800200c9a66}", 
-        "pfs_id": "13-divx-web-player"
+        "pfs_id": "divx-web-player"
     }, 
     "releases": [
         {

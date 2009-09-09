@@ -1,25 +1,27 @@
 {
     "meta": {
+        "pfs_id": "adobe-shockwave-player-JP",
         "vendor": "Adobe", 
         "name": "Adobe Shockwave Player", 
         "platform": {
+            "locale": "ja-JP", 
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         }, 
         "url": "http://www.adobe.com/go/getshockwave/", 
+        "icon_url": "???", 
         "manual_installation_url": "http://www.adobe.com/go/getshockwave/", 
         "version": "10.1", 
-        "license_url": "http://www.adobe.com/go/eula_shockwaveplayer", 
-        "pfs_id": "2-adobe-shockwave-player"
+        "license_url": "http://www.adobe.com/go/eula_shockwaveplayer_jp"
     }, 
     "releases": [
         {
             "guid": "{45f2a22c-4029-4209-8b3d-1421b989633f}", 
-            "xpi_location": "https://www.macromedia.com/go/xpi_shockwaveplayer_win", 
+            "xpi_location": "https://www.macromedia.com/go/xpi_shockwaveplayerj_win", 
             "os_name": "win"
         }, 
         {
             "guid": "{49141640-b629-4d57-a539-b521c4a99eff}", 
-            "xpi_location": "https://www.macromedia.com/go/xpi_shockwaveplayer_macosx", 
+            "xpi_location": "https://www.macromedia.com/go/xpi_shockwaveplayerj_macosx", 
             "os_name": "mac"
         }
     ], 

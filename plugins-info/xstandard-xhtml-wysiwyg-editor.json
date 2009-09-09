@@ -10,7 +10,7 @@
         "installer_shows_ui": "false", 
         "guid": "{3563d917-2f44-4e05-8769-47e655e92361}", 
         "xpi_location": "http://xstandard.com/download/xstandard.xpi", 
-        "pfs_id": "10-xstandard-xhtml-wysiwyg-editor"
+        "pfs_id": "xstandard-xhtml-wysiwyg-editor"
     }, 
     "releases": [
         {
