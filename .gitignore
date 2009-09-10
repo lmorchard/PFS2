@@ -11,5 +11,9 @@ xfers/
 docs/api/
 logs/
 logs/*log
+tests/log/
 httpd.conf
 .htaccess
+conf/config.php
+tests/conf/config.php
+

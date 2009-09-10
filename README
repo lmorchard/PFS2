@@ -7,7 +7,6 @@ Someday, this thing will help you find plugin updates.
 Installation:
 mysql> CREATE DATABASE pfs2
 $ mysql pfs2 < conf/schema.sql 
-$ mysql pfs2 < conf/data.sql 
 
 Configure Apache's document root to be pfs2/trunk/htdocs
 
@@ -17,6 +16,10 @@ Edit config.php and update
 * primary_database, shadow_databases, and memcache_config
 
 Ensure memcached is running.
+
+Finally, to load the DB with data from JSON plugin definitions:
+
+$ php bin/update-db.php
 
 Test Install:
 Request:
