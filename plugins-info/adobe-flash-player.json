@@ -7,12 +7,26 @@
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         }, 
         "url": "http://www.adobe.com/go/getflashplayer", 
-        "manual_installation_url": "http://www.adobe.com/go/getflashplayer", 
-        "version": "10.0.22.87", 
         "license_url": "http://www.adobe.com/go/eula_flashplayer", 
-        "installer_shows_ui": "false"
+        "version": "10.0.32.18"
     }, 
+    "mimes": [
+        { "name": "application/x-shockwave-flash", "suffixes": "swf", "description": "Shockwave Flash" }, 
+        { "name": "application/futuresplash", "suffixes": "spl", "description": "FutureSplash Player" }
+    ],
     "releases": [
+        {
+            "version": "10.0.22.87",
+            "vulnerability_url": "http://www.adobe.com/support/security/bulletins/apsb09-10.html"
+        },
+        {
+            "version": "9.0.159.0",
+            "vulnerability_url": "http://www.adobe.com/support/security/bulletins/apsb09-10.html"
+        },
+        {
+            "version": "9.0.115.0",
+            "vulnerability_url": "http://documents.iss.net/whitepapers/IBM_X-Force_WP_final.pdf"
+        },
         {
             "guid": "{4cfaef8a-a6c9-41a0-8e6f-967eb8f49143}", 
             "os_name": "windows nt 6.0"
@@ -115,18 +129,6 @@
             "guid": "{0ae66efd-e183-431a-ab51-3af2c278a3dd}", 
             "xpi_location": "http://download.macromedia.com/pub/flashplayer/xpi/current/flashplayer-solaris-x86.xpi", 
             "os_name": "sunos"
-        }
-    ], 
-    "mimes": [
-        {
-            "suffixes": "swf", 
-            "name": "application/x-shockwave-flash", 
-            "description": "Shockwave Flash"
-        }, 
-        {
-            "suffixes": "spl", 
-            "name": "application/futuresplash", 
-            "description": "FutureSplash Player"
         }
     ]
 }
