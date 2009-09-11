@@ -74,11 +74,13 @@
         {
             "platform": {
                 "locale": "ja-JP", 
-                "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+                "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}",
+                "app_release": "3.5"
             }, 
             "license_url": "http://www.adobe.com/go/eula_flashplayer_jp", 
             "guid": "{89977581-9028-4be0-b151-7c4f9bcd3211}", 
             "xpi_location": "http://fpdownload.macromedia.com/get/flashplayer/xpi/current/flashplayer-mac.xpi", 
+            "version": "11.0.0.0", 
             "os_name": "mac"
         }, 
         {
