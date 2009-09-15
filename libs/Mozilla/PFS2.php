@@ -377,6 +377,7 @@ class Mozilla_PFS2 extends Mozilla_App
             'modified' => gmdate('c')
         );
         $release_defaults = array(
+            'os_name' => '*'
         );
         $platform_defaults = array(
             'app_id' => '*',
