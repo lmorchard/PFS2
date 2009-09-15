@@ -89,7 +89,7 @@ class Mozilla_PFS2_Database extends Database
      * @param array  List of field names for bind parameters
      * @return Mozilla_PFS2_Database_Statement
      */
-    public function prepareStatement($sql, $field_names)
+    public function prepareStatement($sql, $field_names=null)
     {
         $stmt = new Mozilla_PFS2_Database_Statement($this, $sql, $field_names);
         return $stmt;
@@ -114,7 +114,7 @@ class Mozilla_PFS2_Database_Statement
      * @param string SQL source for prepared statement
      * @param array  List of field names for bind parameters
      */
-    public function __construct($db, $sql, $field_names)
+    public function __construct($db, $sql, $field_names=null)
     {
         $this->db = $db;
         $this->sql = $sql;
@@ -165,7 +165,7 @@ class Mozilla_PFS2_Database_Statement
      * Execute the statement with the given fields, and immediately 
      * finish.
      */
-    public function execute_finish($fields)
+    public function execute_finish($fields=null)
     {
         $rv = $this->execute($fields);
         $this->finish();

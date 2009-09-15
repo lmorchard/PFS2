@@ -85,12 +85,25 @@ CREATE TABLE `plugins_mimes` (
     PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+DROP TABLE IF EXISTS `plugin_aliases`;
+CREATE TABLE `plugin_aliases` (
+    `id` int(11) unsigned NOT NULL auto_increment,
+    `plugin_id` int(11) unsigned NOT NULL,
+    `alias` varchar(255) NOT NULL,
+    UNIQUE INDEX `unique_release` (`plugin_id`, `alias`),
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`plugin_id`) REFERENCES plugins(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 DROP TABLE IF EXISTS `plugin_releases`;
 CREATE TABLE `plugin_releases` (
     `id` int(11) unsigned NOT NULL auto_increment,
     `plugin_id` int(11) unsigned NOT NULL,
     `os_id` int(11) unsigned NOT NULL,
     `platform_id` int(11) unsigned NOT NULL,
+    `status_code` int(11) default NULL,
+    `vulnerability_description` TEXT NULL,
+    `vulnerability_url` varchar(255) default NULL,
     `guid` varchar(255) NOT NULL,
     `filename` varchar(255) NOT NULL,
     `version` varchar(255) NOT NULL,
@@ -104,9 +117,6 @@ CREATE TABLE `plugin_releases` (
     `min` varchar(255) default NULL,
     `max` varchar(255) default NULL,
     `xpcomabi` varchar(255) default NULL,
-    `has_vulnerability` tinyint(1) default 0,
-    `vulnerability_description` TEXT NULL,
-    `vulnerability_url` varchar(255) default NULL,
     `modified` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `unique_release` (`plugin_id`, `os_id`, `platform_id`, `version`),

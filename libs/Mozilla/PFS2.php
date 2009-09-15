@@ -26,6 +26,13 @@ class Mozilla_PFS2 extends Mozilla_App
         'app_id', 'app_release', 'app_version', 'locale'
     );
 
+    public static $status_codes = array(
+        'unknown'    => 0,
+        'latest'     => 10,
+        'outdated'   => 20,
+        'vulnerable' => 30,
+    );
+
     // }}}
 
     /**
@@ -98,8 +105,8 @@ class Mozilla_PFS2 extends Mozilla_App
                 'vendor', 'url', 'icon_url', 'license_url',
             ),
             'plugin_releases' => array(
-                'has_vulnerability', 'vulnerability_url', 'vulnerability_description',
-                'guid', 'filename', 'version', 'xpi_location',
+                'vulnerability_url', 'vulnerability_description',
+                'status_code', 'guid', 'filename', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui', 
                 'manual_installation_url', 'license_url', 'needs_restart', 'min', 
                 'max', 'xpcomabi', 
@@ -130,7 +137,7 @@ class Mozilla_PFS2 extends Mozilla_App
             "`platforms`.`locale` DESC", 
             "`platforms`.`app_id` DESC",
             "`platforms`.`app_version` DESC", 
-            "`platforms`.`app_release` DESC"
+            "`platforms`.`app_release` DESC",
         );
 
         /*
@@ -244,10 +251,18 @@ class Mozilla_PFS2 extends Mozilla_App
          * from the plugins table are overwritten by non-empty columns from the 
          * plugin_releases table, offering a sort of inheritance relationship.
          */
+        $codes_to_status = array_flip(self::$status_codes);
         $rows = array();
         while ($stmt->fetch()) {
             $row = array();
             foreach ($names as $idx => $name) {
+
+                if ('status_code' == $name) {
+                    $row['status'] = isset($codes_to_status[$results[$idx]]) ?
+                        $codes_to_status[$results[$idx]] : 'unknown';
+                    continue;
+                }
+
                 // Omit empty columns.
                 if (empty($results[$idx])) continue;
 
@@ -257,6 +272,7 @@ class Mozilla_PFS2 extends Mozilla_App
                     $row[$name] = $results[$idx];
                 }
             }
+
             $rows[] = $row;
         }
         $stmt->close();
@@ -270,28 +286,64 @@ class Mozilla_PFS2 extends Mozilla_App
          * This might be better done in MySQL, but couldn't quite figure
          * out how to do it all in SQL.
          */
-        $prune = array();
+        $out = array();
         foreach ($rows as $row) {
-            // Collect rows using a key made up of pfs_id and plugin version
-            $prune_id = join(':', array(
-                @$row['pfs_id'], @$row['version']
-            ));
-            if (empty($prune[$prune_id])) {
+
+            $pfs_id  = $row['pfs_id'];
+            $version = isset($row['version']) ? $row['version'] : '0.0.0';
+
+            if (!isset($out[$pfs_id]['releases'])) {
+                $out[$pfs_id] = array(
+                    'aliases'  => array(), 
+                    'releases' => array()
+                );
+            }
+
+            if (empty($out[$pfs_id]['releases'][$version])) {
                 // Don't have a plugin for this key yet, so just store it.
-                $prune[$prune_id] = $row;
+                $out[$pfs_id]['releases'][$version] = $row;
             } else {
                 // Replace the plugin we have, if this new one is more relevant.
-                $curr_rel = $this->calcRelevance($prune[$prune_id]);
+                $curr_rel = $this->calcRelevance($out[$pfs_id]['releases'][$version]);
                 $new_rel = $this->calcRelevance($row);
                 if ($new_rel > $curr_rel) {
-                    $prune[$prune_id] = $row;
+                    $out[$pfs_id]['releases'][$version] = $row;
                 }
             }
         }
 
-        $rows = array_values($prune);
+        /**
+         * Collect aliases for the pfs_id's found in releases.
+         */
+        if (!empty($out)) {
 
-        return $rows;
+            $params = array_keys($out);
+
+            // Build SQL to find aliases for known pfs_id's
+            $sql = join(' ', array(
+                'SELECT `plugins`.`pfs_id` as pfs_id, `plugin_aliases`.`alias` as alias',
+                'FROM plugin_aliases',
+                'JOIN (`plugins`) ON (`plugin_aliases`.`plugin_id` = `plugins`.`id`)',
+                'WHERE `plugins`.`pfs_id`',
+                'IN (' . str_repeat('?,', count($params)-1) . '?)'
+            ));
+            $aliases_lookup = 
+                $this->db->prepareStatement($sql, array('pfs_id', 'alias'));
+
+            // Execute the SQL with known pfs_ids
+            array_unshift($params, str_repeat('s', count($params)));
+            call_user_func_array(array($aliases_lookup->stmt, 'bind_param'), $params);
+            $aliases_lookup->stmt->execute();
+            $aliases_lookup->stmt->bind_result($pfs_id, $alias);
+
+            // Gather the aliases into the output.
+            while ($aliases_lookup->stmt->fetch()) {
+                $out[$pfs_id]['aliases'][] = $alias;
+            }
+
+        }
+
+        return $out;
     }
 
     /**
@@ -326,12 +378,18 @@ class Mozilla_PFS2 extends Mozilla_App
         $plugin_release_insert = $this->db->prepareInsertOrUpdate(
             'plugin_releases', array(
                 'plugin_id', 'os_id', 'platform_id', 
-                'guid', 'version', 'xpi_location',
+                'status_code', 'guid', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui',
                 'manual_installation_url', 'license_url', 'needs_restart',
                 'min', 'max', 'xpcomabi', 
-                'has_vulnerability', 'vulnerability_url', 'vulnerability_description',
+                'vulnerability_url', 'vulnerability_description',
                 'modified'
+            )
+        );
+
+        $plugin_aliases_insert = $this->db->prepareInsertOrUpdate(
+            'plugin_aliases', array( 
+                'plugin_id', 'alias' 
             )
         );
 
@@ -371,6 +429,7 @@ class Mozilla_PFS2 extends Mozilla_App
         );
 
         $meta_defaults = array(
+            'status_code' => self::$status_codes['latest'],
             'installer_shows_ui' => 'true',
             'needs_restart' => 'true',
             'created' => gmdate('c'),
@@ -386,8 +445,9 @@ class Mozilla_PFS2 extends Mozilla_App
             'locale' => '*'
         );
 
-        $meta = array_merge($meta_defaults, $plugin['meta']);
+        $aliases = empty($plugin['aliases']) ? array() : $plugin['aliases'];
 
+        $meta = array_merge($meta_defaults, $plugin['meta']);
         $p_id = $plugin_insert->execute_finish($meta);
 
         if (!empty($plugin['mimes'])) foreach ($plugin['mimes'] as $mime) {
@@ -417,18 +477,57 @@ class Mozilla_PFS2 extends Mozilla_App
             ));
             $release['platform_id'] = $platform_id;
 
+            if (!empty($release['status']) && 
+                    !empty(self::$status_codes[$release['status']])) {
+                $release['status_code'] = self::$status_codes[$release['status']];
+            }
+
             if (!empty($release['vulnerability_description']) ||
                     !empty($release['vulnerability_url'])) {
-                $release['has_vulnerability'] = 1;
+                $release['status_code'] = self::$status_codes['vulnerable'];
             }
 
             $pr_id = $plugin_release_insert->execute_finish($release);
             if ($pr_id) $release_ids[] = $pr_id;
 
+            $aliases[] = $release['name'];
+
         }
 
-        return array($p_id, $release_ids);
+        // Update the list of known aliases for this plugin.
+        $aliases = array_unique($aliases);
+        foreach ($aliases as $alias) {
+            $plugin_aliases_insert->execute_finish(array(
+                'plugin_id' => $p_id, 
+                'alias' => $alias
+            ));
+        }
 
+        // Mark all other non-vulnerable releases as outdated.
+        $params = array_merge(
+            array(
+                self::$status_codes['outdated'], 
+                self::$status_codes['vulnerable'], 
+                $p_id
+            ), 
+            $release_ids
+        );
+        $sql = join("\n", array(
+            'UPDATE `plugin_releases`',
+            'SET `status_code`=?',
+            'WHERE `plugin_releases`.`status_code` <> ? AND',
+            '      `plugin_releases`.`plugin_id` = ? AND',
+            '      `plugin_releases`.`id` ',
+            '           NOT IN ('.str_repeat('?,', count($params)-4).'?)',
+        ));
+        $update = $this->db->prepareStatement($sql, null);
+
+        array_unshift($params, str_repeat('s', count($params)));
+        call_user_func_array(array($update->stmt, 'bind_param'), $params);
+        $update->stmt->execute();
+        $update->finish();
+
+        return array($p_id, $release_ids);
     }
 
     
