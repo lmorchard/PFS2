@@ -11,21 +11,6 @@ class Mozilla_PFS2 extends Mozilla_App
 {
     // {{{ Class constants
     
-    public static $release_fields = array(
-        'guid', 'version', 'xpi_location',
-        'installer_location', 'installer_hash', 'installer_shows_ui',
-        'manual_installation_url', 'license_url', 'needs_restart',
-        'min', 'max', 'xpcomabi', 'os_name', 'platform_key'
-    );
-
-    public static $mime_fields = array(
-        'name', 'description', 'suffixes'
-    );
-    
-    public static $platform_fields = array(
-        'app_id', 'app_release', 'app_version', 'locale'
-    );
-
     public static $status_codes = array(
         'unknown'    => 0,
         'latest'     => 10,
@@ -278,20 +263,23 @@ class Mozilla_PFS2 extends Mozilla_App
         $stmt->close();
 
         /*
-         * Prune the rows down to the single most relevant plugin record for
-         * each pfs_id and plugin version pair.  That is, records with 
+         * Group the releases by pfs_id, and reduce releases down to the
+         * single most relevant record per version.  That is, records with 
          * non-wildcard matches are preferred over wildcard matches for OS / 
          * platform / etc.
          *
-         * This might be better done in MySQL, but couldn't quite figure
+         * This might be better done in the database, but couldn't quite figure
          * out how to do it all in SQL.
          */
         $out = array();
         foreach ($rows as $row) {
 
+            // Grab the pfs_id and version from the row
             $pfs_id  = $row['pfs_id'];
             $version = isset($row['version']) ? $row['version'] : '0.0.0';
 
+            // Initialize the structure for a plugin, if this is the first 
+            // release seen.
             if (!isset($out[$pfs_id]['releases'])) {
                 $out[$pfs_id] = array(
                     'aliases'  => array(), 
@@ -299,11 +287,12 @@ class Mozilla_PFS2 extends Mozilla_App
                 );
             }
 
+            // Decide whether to store or ignore this release...
             if (empty($out[$pfs_id]['releases'][$version])) {
-                // Don't have a plugin for this key yet, so just store it.
+                // Don't have a release for this version yet, so store it.
                 $out[$pfs_id]['releases'][$version] = $row;
             } else {
-                // Replace the plugin we have, if this new one is more relevant.
+                // Replace the release we have, if this new one is more relevant.
                 $curr_rel = $this->calcRelevance($out[$pfs_id]['releases'][$version]);
                 $new_rel = $this->calcRelevance($row);
                 if ($new_rel > $curr_rel) {
@@ -312,7 +301,7 @@ class Mozilla_PFS2 extends Mozilla_App
             }
         }
 
-        /**
+        /*
          * Collect aliases for the pfs_id's found in releases.
          */
         if (!empty($out)) {
@@ -344,6 +333,50 @@ class Mozilla_PFS2 extends Mozilla_App
         }
 
         return $out;
+    }
+    
+    /**
+     * Normalize a client OS name into a list of names for fuzzy
+     * matching in the DB.
+     *
+     * @param   string Raw name of client OS
+     * @returns array  List of normalized matches
+     */
+    public function normalizeClientOS($client_os)
+    {
+        $list = array();
+
+        $client_os = trim(strtolower($client_os));
+        if (!empty($client_os)) 
+            $list[] = $client_os;
+
+        if (preg_match('/^windows nt 6\.0/', $client_os)) {
+            $list[] = 'windows vista';
+        }
+        if (preg_match('/^win/', $client_os)) {
+            $list[] = 'win';
+        }
+        if (preg_match('/^(ppc|intel) mac os x/', $client_os)) {
+            $list[] = 'mac os x';
+            $list[] = 'mac';
+        }
+        if (preg_match('/^linux/', $client_os)) {
+            $list[] = 'linux';
+        }
+        if (preg_match('/^linux.+i\d86/i', $client_os)) {
+            $list[] = 'linux x86';
+        }
+        
+        if (preg_match('/^sunos/i', $client_os)) {
+            $list[] = 'sunos';
+            if (preg_match('/sun4u/i', $client_os)) {
+                $list[] = 'sunos sun4u';
+            }
+        }
+
+        $list[] = '*';
+
+        return $list;
     }
 
     /**
@@ -388,44 +421,27 @@ class Mozilla_PFS2 extends Mozilla_App
         );
 
         $plugin_aliases_insert = $this->db->prepareInsertOrUpdate(
-            'plugin_aliases', array( 
-                'plugin_id', 'alias' 
-            )
+            'plugin_aliases', array('plugin_id', 'alias')
         );
 
         $plugins_mimes_insert = $this->db->prepareInsertOrUpdate(
-            'plugins_mimes', array( 
-                'plugin_id', 'mime_id' 
-            )
+            'plugins_mimes', array('plugin_id', 'mime_id')
         );
 
         $mimes_insert = $this->db->prepareInsertOrUpdate(
-            'mimes', array(
-                'name', 'description', 'suffixes'
-            )
+            'mimes', array('name', 'description', 'suffixes')
         );
 
         $platforms_insert = $this->db->prepareInsertOrUpdate(
-            'platforms', array(
-                'app_id', 'app_release', 'app_version', 'locale'
-            )
+            'platforms', array('app_id', 'app_release', 'app_version', 'locale')
         );
 
         $oses_insert = $this->db->prepareInsertOrUpdate(
-            'oses', array(
-                'name'
-            )
+            'oses', array('name')
         );
 
         $os_lookup = $this->db->prepareStatement(
             'SELECT id FROM oses WHERE name=?', array('name')
-        );
-
-        $platform_lookup = $this->db->prepareStatement("
-            SELECT id FROM platforms 
-            WHERE app_id=? AND app_release=? AND app_version=? AND locale=?
-            ",
-            Mozilla_PFS2::$platform_fields
         );
 
         $meta_defaults = array(
@@ -528,51 +544,6 @@ class Mozilla_PFS2 extends Mozilla_App
         $update->finish();
 
         return array($p_id, $release_ids);
-    }
-
-    
-    /**
-     * Normalize a client OS name into a list of names for fuzzy
-     * matching in the DB.
-     *
-     * @param   string Raw name of client OS
-     * @returns array  List of normalized matches
-     */
-    public function normalizeClientOS($client_os)
-    {
-        $list = array();
-
-        $client_os = trim(strtolower($client_os));
-        if (!empty($client_os)) 
-            $list[] = $client_os;
-
-        if (preg_match('/^windows nt 6\.0/', $client_os)) {
-            $list[] = 'windows vista';
-        }
-        if (preg_match('/^win/', $client_os)) {
-            $list[] = 'win';
-        }
-        if (preg_match('/^(ppc|intel) mac os x/', $client_os)) {
-            $list[] = 'mac os x';
-            $list[] = 'mac';
-        }
-        if (preg_match('/^linux/', $client_os)) {
-            $list[] = 'linux';
-        }
-        if (preg_match('/^linux.+i\d86/i', $client_os)) {
-            $list[] = 'linux x86';
-        }
-        
-        if (preg_match('/^sunos/i', $client_os)) {
-            $list[] = 'sunos';
-            if (preg_match('/sun4u/i', $client_os)) {
-                $list[] = 'sunos sun4u';
-            }
-        }
-
-        $list[] = '*';
-
-        return $list;
     }
 
 }
