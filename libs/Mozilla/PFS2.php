@@ -282,10 +282,16 @@ class Mozilla_PFS2 extends Mozilla_App
             // release seen.
             if (!isset($out[$pfs_id]['releases'])) {
                 $out[$pfs_id] = array(
+                    'latest_release' => '',
                     'aliases'  => array(), 
                     'releases' => array()
                 );
             }
+
+            if ('latest'==$row['status'] && $version>$out[$pfs_id]['latest_release']) {
+                $out[$pfs_id]['latest_release'] = $version;
+            }
+
 
             // Decide whether to store or ignore this release...
             if (empty($out[$pfs_id]['releases'][$version])) {

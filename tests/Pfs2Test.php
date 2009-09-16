@@ -125,6 +125,9 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
         $this->assertTrue( !empty($results['foobar-media']),
             'Plugin of pfs_id "foobar-media" should be returned');
 
+        $this->assertEquals('100.2.6', $results['foobar-media']['latest_release'],
+            'Latest version should be present and match.');
+
         // Assert that the plugin has expected aliases
         $this->assertTrue( !empty($results['foobar-media']['aliases']),
             'Plugin should provide aliases');
@@ -245,6 +248,9 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
 
         $this->assertTrue( !empty($results['foobar-media']),
             'Plugin of pfs_id "foobar-media" should be returned');
+
+        $this->assertEquals('200.9.9', $results['foobar-media']['latest_release'],
+            'Latest version should be present and match.');
 
         $this->assertTrue( !empty($results['foobar-media']['releases']['200.9.9']),
             'Release v200.9.9 of "foobar-media" should be returned');
