@@ -1,0 +1,195 @@
+= Mozilla Plugin Finder Service (PFS) 2 =
+
+PFS2 is a simple HTTP service intended to:
+
+# Assist in finding a plugins for MIME types whose handling is unknown to the client
+# Offer version and security vulnerability data on installed plugins for upgrade recommendations
+
+The server side of PFS2 maintains a database of plugins and plugin releases.
+These records are indexed by MIME type, and a set of client application details
+that help identify the most appropriate versions of plugins for a given
+platform, OS, locale, & etc.
+
+* https://wiki.mozilla.org/PFS2
+* lorchard@mozilla.com
+* Public URL: TBD
+* Source code (in SVN): http://svn.mozilla.org/projects/pfs2/trunk/
+* DB Schema (in SVN): http://svn.mozilla.org/projects/pfs2/trunk/conf/schema.sql
+
+== Installation ===
+
+* Requirements
+** PHP (both web server and CLI)
+** MySQL 5.x
+** Memcached
+
+* Create a MySQL database from schema
+
+    mysqladmin -uroot -p create pfs2
+    mysql -uroot -p pfs2 -e "grant all privileges on pfs2.* to pfs2@'localhost' identified by 'pfs2';"
+    mysql -uroot -p pfs2 < conf/schema.sql
+
+* Update configuration
+
+    cp conf/config.php-dist conf/config.php
+    # edit the config file to reflect database and memcache
+    vim conf/config.php 
+
+* Update database from plugin definitions
+
+    php bin/update-db.php
+
+* Ensure MySQL and Memcached are running
+
+* Configure Apache's document root to be pfs2/trunk/htdocs
+
+== Request Parameters ==
+
+Queries against PFS2 are performed using HTTP GET, with the following parameters supported:
+
+; mimetype : A space-separated list of mimetypes for a plugin. (Note: space can be encoded as <tt>+</tt> in URLs.)
+; clientOS : The client's OS (eg. <tt>navigator.oscpu</tt>, "Windows NT 5.1", "Intel Mac OS X 10.5")
+; chromeLocale : The client's locale (eg. <tt>navigator.language</tt>)
+; appID : The client's app ID (eg. <tt>navigator.'''???'''</tt> (userAgent?), Firefox is "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}")
+; appRelease : Client app release version (eg.  <tt>navigator.'''???'''</tt> (userAgent?), "3.5.3")
+; appVersion : Client's application build version (eg. <tt>navigator.buildID</tt>, "20090824085414")
+; callback : Function wrapper for JSON output, (see also: [http://bob.pythonmac.org/archives/2005/12/05/remote-json-jsonp/ JSONP technique])
+
+=== Example request === 
+
+Line breaks added for clarity:
+
+    curl -s 'http://dev.pfs2.mozilla.org/?
+        mimetype=application/x-shockwave-flash&
+        appID=%7Bec8030f7-c20a-464f-9b0e-13a3a9e97384%7D&
+        appVersion=2008052906&
+        appRelease=3.5&
+        clientOS=mac&
+        chromeLocale=ja-JP'
+
+== Response Format ==
+
+The response MIME type for PFS2 is either <tt>application/json</tt>, or
+<tt>text/javascript</tt> if the <tt>callback</tt> parameter is non-empty.
+
+The top-level JSON payload is an object pairing plugin identifiers (<tt>pfs_id</tt>s)
+each with an object describing a plugin's releases and known aliases.  Note
+that the <tt>pfs_id</tt> values are unique only to PFS2, and simply serve as
+a way to organize plugins that may change names and other attributes between
+releases.
+
+=== Overall structure ===
+
+Plugin descriptions have the following overall structure:
+
+    {
+        "adobe-flash-player": {
+            "aliases": [ ... ],
+            "releases": [ ... ]
+        }
+    }
+
+=== Plugin name aliases ===
+
+The <tt>aliases</tt> property consists of a list of known names by which the
+plugin has been called.  If a value in the list is contained in <tt>/.../</tt>,
+that alias is intended to be treated as a regex match.  This list is meant
+to assist in identifying installed plugins and matching them with PFS2 results.
+
+For example:
+
+    {
+        "adobe-flash-player": {
+            "aliases": [
+                "/.*Flash.*/", 
+                "Adobe Flash Player", 
+                "Shockwave Flash"
+            ],
+            "releases": [ ... ]
+        }
+    }
+
+=== Plugin release descriptions ===
+
+The <tt>releases</tt> property is an object whose properties are named for
+plugin versions, and whose property values are objects describing plugin
+releases.  Each of the plugin release description object may some or all of the
+following properties:
+
+; pfs_id : <tt>pfs_id</tt> of the plugin within PFS2
+; name : Name of the plugin
+; vendor : Name of the vendor providing the plugin
+; version : A dot-separated normalized version for the plugin, may differ from official vendor versioning scheme in order to maintain internal consistency in PFS2
+; guid : A GUID for the plugin release, may differ between releases and platforms (unlike <tt>pfs_id</tt>)
+; status : Current status of the release, eg. <tt>latest</tt>, <tt>outdated</tt>, <tt>vulnerable</tt>
+; vulnerability_description : For status <tt>vulnerable</tt>, a short description of security vulnerabilities for the plugin release
+; vulnerability_url : For status <tt>vulnerable</tt>, a URL detailing security vulnerabilities for the plugin release
+; filename : Filename of the plugin as installed
+; url : URL with details describing the plugin
+; license_url : URL where the license for using the plugin may be found
+; manual_installation_url : URL for a manually-launched executable installer for the plugin
+; xpi_location : URL for an XPI-based installer for the plugin
+; installer_location : URL for an executable installer for the plugin (mainly for Windows)
+; installer_hash : A hash of the installer's contents for verifying its integrity
+; installer_shows_ui : (0/1) whether or not the installer displays a user interface
+; needs_restart : (0/1) whether or not the OS needs to restart after plugin installation
+; xpcomabi : '''''(Not sure, inherited from PFS1, need a description)'''''
+; min : '''''(Not sure, inherited from PFS1, need a description)'''''
+; max : '''''(Not sure, inherited from PFS1, need a description)'''''
+; app_release : Client app release for which the plugin is intended (* is wildcard)
+; app_version : Client app version for which the plugin is intended (* is wildcard)
+; locale : Client app locale for which the plugin is intended (* is wildcard)
+; os_name : Client app OS for which the plugin is intended (* is wildcard)
+; modified : Timestamp when last the release record was modified
+
+=== Example response === 
+
+    $ curl -s 'http://dev.pfs2.mozilla.org/?mimetype=application/x-shockwave-flash&appID=%7Bec8030f7-c20a-464f-9b0e-13a3a9e97384%7D&appVersion=2008052906&appRelease=3.5&clientOS=mac&chromeLocale=ja-JP'
+    
+    {
+        "adobe-flash-player": {
+            "releases": {
+                "11.0.0.0": {
+                    "status": "latest", 
+                    "app_release": "3.5", 
+                    "app_version": "*", 
+                    "vendor": "Adobe", 
+                    "pfs_id": "adobe-flash-player", 
+                    "url": "http://www.adobe.com/go/getflashplayer", 
+                    "modified": "2009-09-16T00:58:39+00:00", 
+                    "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}", 
+                    "locale": "ja-JP", 
+                    "version": "11.0.0.0", 
+                    "license_url": "http://www.adobe.com/go/eula_flashplayer_jp", 
+                    "guid": "{89977581-9028-4be0-b151-7c4f9bcd3211}", 
+                    "xpi_location": "http://fpdownload.macromedia.com/get/flashplayer/xpi/current/flashplayer-mac.xpi", 
+                    "os_name": "mac", 
+                    "name": "Adobe Flash Player"
+                }, 
+                "10.0.32.18": {
+                    "status": "vulnerable", 
+                    "app_release": "3.5", 
+                    "app_version": "*", 
+                    "vendor": "Adobe", 
+                    "pfs_id": "adobe-flash-player", 
+                    "url": "http://www.adobe.com/go/getflashplayer", 
+                    "modified": "2009-09-16T00:58:39+00:00", 
+                    "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}", 
+                    "vulnerability_description": "Makes your computer kick puppies", 
+                    "vulnerability_url": "http://google.com", 
+                    "version": "10.0.32.18", 
+                    "license_url": "http://www.adobe.com/go/eula_flashplayer_jp", 
+                    "locale": "ja-JP", 
+                    "guid": "{89977581-9028-4be0-b151-7c4f9bcd3211}", 
+                    "xpi_location": "http://fpdownload.macromedia.com/get/flashplayer/xpi/current/flashplayer-mac.xpi", 
+                    "os_name": "mac", 
+                    "name": "Adobe Flash Player"
+                }
+            }, 
+            "aliases": [
+                "/.*Flash.*/", 
+                "Adobe Flash Player", 
+                "Shockwave Flash"
+            ]
+        }
+    }
