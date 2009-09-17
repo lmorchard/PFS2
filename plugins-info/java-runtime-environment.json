@@ -1,16 +1,20 @@
 {
     "meta": {
         "pfs_id": "java-runtime-environment", 
+        "name": "Java Runtime Environment",
         "vendor": "Sun Microsystems", 
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         }, 
         "url": "http://java.com/firefoxjre", 
-        "manual_installation_url": "http://java.com/firefoxjre", 
-        "name": "Java Runtime Environment"
+        "manual_installation_url": "http://java.com/firefoxjre"
     }, 
+    "aliases": [
+        "\/Java Embedding Plugin.*\/"
+    ],
     "releases": [
         {
+            "version": "1.5.0.19",
             "installer_location": "http://java.com/firefoxjre_exe", 
             "guid": "{fbe640ef-4375-4f45-8d79-767d60bf75b8}", 
             "installer_hash": "sha1:89a78d34a36d7e25cc32b1a507a2cd6fb87dd40a", 
@@ -18,13 +22,7 @@
             "os_name": "windows nt 6.0"
         }, 
         {
-            "installer_location": "http://java.com/firefoxjre_exe", 
-            "guid": "{92a550f2-dfd2-4d2f-a35d-a98cfda73595}", 
-            "installer_hash": "sha1:89a78d34a36d7e25cc32b1a507a2cd6fb87dd40a", 
-            "os_name": "win", 
-            "xpi_location": "http://java.com/jre-install.xpi"
-        }, 
-        {
+            "version": "1.5.0.19",
             "guid": "{fbe640ef-4375-4f45-8d79-767d60bf75b8}", 
             "os_name": "*"
         }

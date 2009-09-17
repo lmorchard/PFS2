@@ -3,7 +3,6 @@
         "pfs_id": "apple-quicktime", 
         "name": "QuickTime Plug-in",
         "vendor": "Apple", 
-        "version": "7.6.4",
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         }, 
@@ -13,10 +12,12 @@
     }, 
     "releases": [
         {
+            "version": "7.6.4",
             "guid": "{a42bb825-7eee-420f-8ee7-834062b6fefd}", 
             "os_name": "win"
         }, 
         {
+            "version": "7.6.4",
             "guid": "{a42bb825-7eee-420f-8ee7-834062b6fefd}", 
             "os_name": "mac"
         }
