@@ -338,7 +338,14 @@ class Mozilla_PFS2 extends Mozilla_App
 
         }
 
-        return $out;
+        // Trade pfs_ids for numeric indexes to make a more easily iterated 
+        // array for a JS client.
+        $flat = array();
+        foreach ($out as $pfs_id => $plugin) {
+            $flat[] = $plugin;
+        }
+
+        return $flat;
     }
     
     /**
