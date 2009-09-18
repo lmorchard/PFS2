@@ -90,7 +90,8 @@ CREATE TABLE `plugin_aliases` (
     `id` int(11) unsigned NOT NULL auto_increment,
     `plugin_id` int(11) unsigned NOT NULL,
     `alias` varchar(255) NOT NULL,
-    UNIQUE INDEX `unique_release` (`plugin_id`, `alias`),
+    `is_regex` tinyint(1) NOT NULL default 0,
+    UNIQUE INDEX `unique_release` (`plugin_id`, `alias`, `is_regex`),
     PRIMARY KEY (`id`),
     FOREIGN KEY (`plugin_id`) REFERENCES plugins(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

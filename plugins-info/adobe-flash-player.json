@@ -10,14 +10,16 @@
         "license_url": "http://www.adobe.com/go/eula_flashplayer", 
         "version": "10.0.32.18"
     }, 
-    "aliases": [
-        "Shockwave Flash",
-        "Adobe Flash Player",
-        "\/.*Flash.*\/"
-    ],
+    "aliases": {
+        "literal": [
+            "Shockwave Flash",
+            "Adobe Flash Player"
+        ],
+        "regex": [ ".*Flash.*" ]
+    },
     "mimes": [
-        { "name": "application/x-shockwave-flash", "suffixes": "swf", "description": "Shockwave Flash" }, 
-        { "name": "application/futuresplash", "suffixes": "spl", "description": "FutureSplash Player" }
+        "application/x-shockwave-flash",
+        "application/futuresplash"
     ],
     "releases": [
         {

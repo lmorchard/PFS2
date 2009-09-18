@@ -25,8 +25,13 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
             )
         ),
         'aliases' => array(
-            'Super Happy Future Viewer',
-            'Foobar Corporation Viewer of Media',
+            'literal' => array(
+                'Super Happy Future Viewer',
+            ),
+            'regex' => array(
+                'Foobar Corporation Viewer of Media.*',
+                'Barcorp.*Moving Picture Thingy.*'
+            ),
         ),
         'mimes' => array(
             'audio/x-foobar-audio',
@@ -120,82 +125,102 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
             'chromeLocale' => 'en-US'
         );
 
-        $results = $this->pfs2->lookup($criteria);
-
-        $this->assertTrue( !empty($results[0]),
-            'Plugin of pfs_id "foobar-media" should be returned');
-
-        $this->assertEquals('100.2.6', $results[0]['latest_release'],
-            'Latest version should be present and match.');
+        list($results, $result, $releases, $versions) = 
+            $this->lookupAndExtract($criteria);
 
         // Assert that the plugin has expected aliases
-        $this->assertTrue( !empty($results[0]['aliases']),
+        $this->assertTrue( !empty($result['aliases']),
             'Plugin should provide aliases');
-        $expected = array(
-            'Foobar Corporation Viewer of Media',
-            'Foobar Media Viewer',
-            'Horribly Broken Media Viewer',
-            'Super Happy Future Viewer',
-        );
-        sort($expected); sort($results[0]['aliases']);
-        $this->assertEquals($expected, $results[0]['aliases']);
+        $this->assertTrue( !empty($result['aliases']['literal']),
+            'Plugin should provide literal aliases');
+        $this->assertTrue( !empty($result['aliases']['regex']),
+            'Plugin should provide regex aliases');
 
-        // Ensure the expected versions are sent
-        $this->assertTrue( !empty($results[0]['releases']['99.9.9']),
-            'Release v99.9.9 of "foobar-media" should be returned');
-        $this->assertTrue( !empty($results[0]['releases']['100.2.6']),
-            'Release v100.2.6 of "foobar-media" should be returned');
+        $expected = array(
+            'literal' => array(
+                'Foobar Media Viewer',
+                'Horribly Broken Media Viewer',
+                'Super Happy Future Viewer',
+            ),
+            'regex' => array(
+                'Foobar Corporation Viewer of Media.*',
+                'Barcorp.*Moving Picture Thingy.*'
+            ),
+        );
+        foreach ($expected as $kind=>$e_data) {
+            sort($e_data);
+            sort($result['aliases'][$kind]);
+            $this->assertEquals($e_data, $result['aliases'][$kind]);
+        }
+
+        // There should be non-empty releases
+        $this->assertTrue( !empty($result['releases']),
+           "Releases should be non-empty" );
+        $this->assertTrue( !empty($releases['latest']),
+           "Latest release should be present." );
+        $this->assertTrue( !empty($releases['others']),
+           "Other releases should be present." );
+
+        // Assert the versions expected from test data
+        $expected_versions = array( '100.2.6', '99.9.9' );
+        $this->assertEquals( $expected_versions, array_keys($versions) );
+
+        // Assert the latest version
+        $this->assertEquals('100.2.6', $releases['latest']['version'],
+            'Latest version should be present and match.');
 
         // Verify the names for expected versions
         foreach (array('99.9.9', '100.2.6') as $version) {
             $this->assertEquals(
                 'Foobar Media Viewer', 
-                $results[0]['releases'][$version]['name'],
+                $versions[$version]['name'],
                 'Plugin should be named correctly'
             );
         }
 
         // Verify the GUIDs and statuses
         $this->assertEquals('foobar-win-100.2.6', 
-            $results[0]['releases']['100.2.6']['guid']);
+            $versions['100.2.6']['guid']);
         $this->assertEquals('latest', 
-            $results[0]['releases']['100.2.6']['status']);
+            $versions['100.2.6']['status']);
         $this->assertEquals('foobar-bad-99.9.9', 
-            $results[0]['releases']['99.9.9']['guid']);
+            $versions['99.9.9']['guid']);
         $this->assertEquals('vulnerable', 
-            $results[0]['releases']['99.9.9']['status']);
+            $versions['99.9.9']['status']);
 
         // Now, switch to Mac and expect one of the plugins to change.
         $criteria['clientOS'] = 'Intel Mac OS X 10.5';
+        list($results, $result, $releases, $versions) = 
+            $this->lookupAndExtract($criteria);
 
-        $results = $this->pfs2->lookup($criteria);
-
-        $this->assertTrue( !empty($results[0]),
+        $this->assertTrue( !empty($result),
             'Plugin of pfs_id "foobar-media" should be returned');
-        $this->assertTrue( !empty($results[0]['releases']['99.9.9']),
+        $this->assertTrue( !empty($versions['99.9.9']),
             'Release v99.9.9 of "foobar-media" should be returned');
-        $this->assertTrue( !empty($results[0]['releases']['100.2.6']),
+        $this->assertTrue( !empty($versions['100.2.6']),
             'Release v100.2.6 of "foobar-media" should be returned');
 
         foreach (array('99.9.9', '100.2.6') as $version) {
             $this->assertEquals(
                 'Foobar Media Viewer', 
-                $results[0]['releases'][$version]['name'],
+                $versions[$version]['name'],
                 'Plugin should be named correctly'
             );
         }
         $this->assertEquals('foobar-mac-100.2.6', 
-            $results[0]['releases']['100.2.6']['guid']);
+            $versions['100.2.6']['guid']);
         $this->assertEquals('foobar-bad-99.9.9', 
-            $results[0]['releases']['99.9.9']['guid']);
+            $versions['99.9.9']['guid']);
 
         // Now get specific with locale and expect the Mac release to change again.
         $criteria['chromeLocale'] = 'ja-JP';
-        $results = $this->pfs2->lookup($criteria);
+        list($results, $result, $releases, $versions) = 
+            $this->lookupAndExtract($criteria);
+
         $this->assertEquals('foobar-mac-ja_JP-100.2.6', 
-            $results[0]['releases']['100.2.6']['guid']);
+            $versions['100.2.6']['guid']);
         $this->assertEquals('foobar-bad-99.9.9', 
-            $results[0]['releases']['99.9.9']['guid']);
+            $versions['99.9.9']['guid']);
 
     }
 
@@ -256,7 +281,8 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
                 'chromeLocale' => 'en-US'
             );
 
-            $results = $this->pfs2->lookup($criteria);
+            list($results, $result, $releases, $versions) = 
+                $this->lookupAndExtract($criteria);
 
             switch ($os_name) {
                 case 'Windows NT 5.1':
@@ -270,30 +296,42 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
                     break;
             }
             $this->assertEquals($expected_installer,
-                $results[0]['releases']['200.9.9']['installer_location']);
+                $versions['200.9.9']['installer_location']);
 
-            $this->assertTrue( !empty($results[0]),
-                'Plugin of pfs_id "foobar-media" should be returned');
-
-            $this->assertEquals('200.9.9', $results[0]['latest_release'],
+            $this->assertEquals('200.9.9', $releases['latest']['version'],
                 'Latest version should be present and match.');
 
-            $this->assertTrue( !empty($results[0]['releases']['200.9.9']),
+            $this->assertTrue( !empty($versions['200.9.9']),
                 'Release v200.9.9 of "foobar-media" should be returned');
-            $this->assertEquals('latest', 
-                $results[0]['releases']['200.9.9']['status']);
+            $this->assertEquals('latest', $versions['200.9.9']['status']);
 
-            $this->assertTrue( !empty($results[0]['releases']['100.2.6']),
+            $this->assertTrue( !empty($versions['100.2.6']),
                 'Release v100.2.6 of "foobar-media" should be returned');
-            $this->assertEquals('outdated', 
-                $results[0]['releases']['100.2.6']['status']);
+            $this->assertEquals('outdated', $versions['100.2.6']['status']);
             
-            $this->assertTrue( !empty($results[0]['releases']['99.9.9']),
+            $this->assertTrue( !empty($versions['99.9.9']),
                 'Release v99.9.9 of "foobar-media" should be returned');
-            $this->assertEquals('vulnerable', 
-                $results[0]['releases']['99.9.9']['status']);
+            $this->assertEquals('vulnerable', $versions['99.9.9']['status']);
 
         }
+    }
+    
+    /**
+     * Perform a PFS2 lookup and extract some frequently used info.
+     */
+    public function lookupAndExtract($criteria)
+    {
+        $results = $this->pfs2->lookup($criteria);
+        $result = $results[0];
+
+        $releases = $result['releases'];
+
+        $versions = array($releases['latest']['version'] => $releases['latest']);
+        foreach ($releases['others'] as $release) {
+            $versions[$release['version']] = $release;
+        }
+
+        return array($results, $result, $releases, $versions);
     }
 
 }

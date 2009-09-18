@@ -271,7 +271,7 @@ class Mozilla_PFS2 extends Mozilla_App
          * This might be better done in the database, but couldn't quite figure
          * out how to do it all in SQL.
          */
-        $out = array();
+        $data = array();
         foreach ($rows as $row) {
 
             // Grab the pfs_id and version from the row
@@ -280,29 +280,23 @@ class Mozilla_PFS2 extends Mozilla_App
 
             // Initialize the structure for a plugin, if this is the first 
             // release seen.
-            if (!isset($out[$pfs_id]['releases'])) {
-                $out[$pfs_id] = array(
-                    'latest_release' => '',
+            if (!isset($data[$pfs_id]['releases'])) {
+                $data[$pfs_id] = array(
                     'aliases'  => array(), 
                     'releases' => array()
                 );
             }
 
-            if ('latest'==$row['status'] && $version>$out[$pfs_id]['latest_release']) {
-                $out[$pfs_id]['latest_release'] = $version;
-            }
-
-
             // Decide whether to store or ignore this release...
-            if (empty($out[$pfs_id]['releases'][$version])) {
+            if (empty($data[$pfs_id]['releases'][$version])) {
                 // Don't have a release for this version yet, so store it.
-                $out[$pfs_id]['releases'][$version] = $row;
+                $data[$pfs_id]['releases'][$version] = $row;
             } else {
                 // Replace the release we have, if this new one is more relevant.
-                $curr_rel = $this->calcRelevance($out[$pfs_id]['releases'][$version]);
+                $curr_rel = $this->calcRelevance($data[$pfs_id]['releases'][$version]);
                 $new_rel = $this->calcRelevance($row);
                 if ($new_rel > $curr_rel) {
-                    $out[$pfs_id]['releases'][$version] = $row;
+                    $data[$pfs_id]['releases'][$version] = $row;
                 }
             }
         }
@@ -310,13 +304,16 @@ class Mozilla_PFS2 extends Mozilla_App
         /*
          * Collect aliases for the pfs_id's found in releases.
          */
-        if (!empty($out)) {
+        if (!empty($data)) {
 
-            $params = array_keys($out);
+            $params = array_keys($data);
 
             // Build SQL to find aliases for known pfs_id's
             $sql = join(' ', array(
-                'SELECT `plugins`.`pfs_id` as pfs_id, `plugin_aliases`.`alias` as alias',
+                'SELECT ',
+                '   `plugins`.`pfs_id` as pfs_id,', 
+                '   `plugin_aliases`.`alias` as alias,',
+                '   `is_regex` as is_regex',
                 'FROM plugin_aliases',
                 'JOIN (`plugins`) ON (`plugin_aliases`.`plugin_id` = `plugins`.`id`)',
                 'WHERE `plugins`.`pfs_id`',
@@ -329,20 +326,45 @@ class Mozilla_PFS2 extends Mozilla_App
             array_unshift($params, str_repeat('s', count($params)));
             call_user_func_array(array($aliases_lookup->stmt, 'bind_param'), $params);
             $aliases_lookup->stmt->execute();
-            $aliases_lookup->stmt->bind_result($pfs_id, $alias);
+            $aliases_lookup->stmt->bind_result($pfs_id, $alias, $is_regex);
 
             // Gather the aliases into the output.
             while ($aliases_lookup->stmt->fetch()) {
-                $out[$pfs_id]['aliases'][] = $alias;
+                $data[$pfs_id]['aliases'][($is_regex) ? 'regex' : 'literal'][] = $alias;
             }
 
         }
 
-        // Trade pfs_ids for numeric indexes to make a more easily iterated 
-        // array for a JS client.
+        /*
+         * Perform some final massaging of the data for easier digestion in a 
+         * JS client.  Trade pfs_ids for numeric indices; separate releases into
+         * the latest release and a list of others.
+         */
         $flat = array();
-        foreach ($out as $pfs_id => $plugin) {
+        foreach ($data as $pfs_id => $plugin) {
+
+            $releases = array(
+                'latest' => null,
+                'others' => array()
+            );
+
+            foreach ($plugin['releases'] as $version => $release) {
+                if ('latest'==$release['status'] && (
+                            !$releases['latest'] ||
+                            // TODO: Use better version comparison here?
+                            // Shouldn't ever really matter, since only one release
+                            // should ever be marked as latest in the DB
+                            $version > $releases['latest']['version']
+                        )) {
+                    $releases['latest'] = $release;
+                } else {
+                    $releases['others'][] = $release;
+                }
+            }
+
+            $plugin['releases'] = $releases;
             $flat[] = $plugin;
+
         }
 
         return $flat;
@@ -433,10 +455,6 @@ class Mozilla_PFS2 extends Mozilla_App
             )
         );
 
-        $plugin_aliases_insert = $this->db->prepareInsertOrUpdate(
-            'plugin_aliases', array('plugin_id', 'alias')
-        );
-
         $plugins_mimes_insert = $this->db->prepareInsertOrUpdate(
             'plugins_mimes', array('plugin_id', 'mime_id')
         );
@@ -474,7 +492,13 @@ class Mozilla_PFS2 extends Mozilla_App
             'locale' => '*'
         );
 
-        $aliases = empty($plugin['aliases']) ? array() : $plugin['aliases'];
+        // Set up aliases accumulator
+        $aliases = array(
+            'literal' => isset($plugin['aliases']['literal']) ? 
+                $plugin['aliases']['literal'] : array(),
+            'regex' => isset($plugin['aliases']['regex']) ? 
+                $plugin['aliases']['regex'] : array(),
+        );
 
         $meta = array_merge($meta_defaults, $plugin['meta']);
         $p_id = $plugin_insert->execute_finish($meta);
@@ -519,17 +543,25 @@ class Mozilla_PFS2 extends Mozilla_App
             $pr_id = $plugin_release_insert->execute_finish($release);
             if ($pr_id) $release_ids[] = $pr_id;
 
-            $aliases[] = $release['name'];
+            $aliases['literal'][] = $release['name'];
 
         }
 
         // Update the list of known aliases for this plugin.
-        $aliases = array_unique($aliases);
-        foreach ($aliases as $alias) {
-            $plugin_aliases_insert->execute_finish(array(
-                'plugin_id' => $p_id, 
-                'alias' => $alias
-            ));
+        $plugin_aliases_insert = $this->db->prepareInsertOrUpdate(
+            'plugin_aliases', array('plugin_id', 'alias', 'is_regex')
+        );
+
+        foreach (array('literal', 'regex') as $kind) {
+            $is_regex = ('regex' == $kind) ? 1 : 0;
+            $a = array_unique($aliases[$kind]);
+            foreach ($a as $alias) {
+                $plugin_aliases_insert->execute_finish(array(
+                    'plugin_id' => $p_id, 
+                    'alias' => $alias,
+                    'is_regex' => $is_regex
+                ));
+            }
         }
 
         // Mark all other non-vulnerable releases as outdated.
