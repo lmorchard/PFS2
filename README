@@ -1,59 +1,50 @@
-= Mozilla Plugin Finder Service (PFS) 2 =
-
 PFS2 is a simple HTTP service intended to:
 
-# Assist in finding a plugins for MIME types whose handling is unknown to the client
+# Assist in finding plugins for MIME types whose handling is unknown to the client
 # Offer version and security vulnerability data on installed plugins for upgrade recommendations
+
+__TOC__
+= Server =
 
 The server side of PFS2 maintains a database of plugins and plugin releases.
 These records are indexed by MIME type, and a set of client application details
 that help identify the most appropriate versions of plugins for a given
 platform, OS, locale, & etc.
 
-* https://wiki.mozilla.org/PFS2
-* lorchard@mozilla.com
 * Public URL: TBD
 * Source code (in SVN): http://svn.mozilla.org/projects/pfs2/trunk/
 * DB Schema (in SVN): http://svn.mozilla.org/projects/pfs2/trunk/conf/schema.sql
 
-== Installation ===
+== Installation ==
 
 * Requirements
 ** PHP (both web server and CLI)
 ** MySQL 5.x
 ** Memcached
-
 * Create a MySQL database from schema
-
     mysqladmin -uroot -p create pfs2
     mysql -uroot -p pfs2 -e "grant all privileges on pfs2.* to pfs2@'localhost' identified by 'pfs2';"
     mysql -uroot -p pfs2 < conf/schema.sql
-
 * Update configuration
-
     cp conf/config.php-dist conf/config.php
     # edit the config file to reflect database and memcache
     vim conf/config.php 
-
 * Update database from plugin definitions
-
     php bin/update-db.php
-
 * Ensure MySQL and Memcached are running
-
 * Configure Apache's document root to be pfs2/trunk/htdocs
 
 == Request Parameters ==
 
 Queries against PFS2 are performed using HTTP GET, with the following parameters supported:
 
-; mimetype : A space-separated list of mimetypes for a plugin. (Note: space can be encoded as <tt>+</tt> in URLs.)
-; clientOS : The client's OS (eg. <tt>navigator.oscpu</tt>, "Windows NT 5.1", "Intel Mac OS X 10.5")
-; chromeLocale : The client's locale (eg. <tt>navigator.language</tt>)
-; appID : The client's app ID (eg. <tt>navigator.'''???'''</tt> (userAgent?), Firefox is "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}")
-; appRelease : Client app release version (eg.  <tt>navigator.'''???'''</tt> (userAgent?), "3.5.3")
-; appVersion : Client's application build version (eg. <tt>navigator.buildID</tt>, "20090824085414")
-; callback : Function wrapper for JSON output, (see also: [http://bob.pythonmac.org/archives/2005/12/05/remote-json-jsonp/ JSONP technique])
+; <tt>mimetype</tt> : A space-separated list of mimetypes for a plugin. (Note: space can be encoded as <tt>+</tt> in URLs.)
+; <tt>clientOS</tt> : The client's OS (eg. <tt>navigator.oscpu</tt>, "Windows NT 5.1", "Intel Mac OS X 10.5")
+; <tt>chromeLocale</tt> : The client's locale (eg. <tt>navigator.language</tt>)
+; <tt>appID</tt> : The client's app ID (eg. <tt>navigator.'''???'''</tt> (userAgent?), Firefox is "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}")
+; <tt>appRelease</tt> : Client app release version (eg.  <tt>navigator.'''???'''</tt> (userAgent?), "3.5.3")
+; <tt>appVersion</tt> : Client's application build version (eg. <tt>navigator.buildID</tt>, "20090824085414")
+; <tt>callback</tt> : Function wrapper for JSON output, (see also: [http://bob.pythonmac.org/archives/2005/12/05/remote-json-jsonp/ JSONP technique])
 
 === Example request === 
 
@@ -82,81 +73,107 @@ releases.
 
 Plugin descriptions have the following overall structure:
 
-    {
-        "adobe-flash-player": {
-            "aliases": [ ... ],
-            "releases": [ ... ]
+    [
+        {
+            "aliases": {
+                "literal": [ ... ],
+                "regex": [ ... ]
+            },
+            "releases": {
+                "latest": { ... },
+                "others": [ ... ]
+            }
         }
-    }
+    ]
 
 === Plugin name aliases ===
 
-The <tt>aliases</tt> property consists of a list of known names by which the
-plugin has been called.  If a value in the list is contained in <tt>/.../</tt>,
-that alias is intended to be treated as a regex match.  This list is meant
-to assist in identifying installed plugins and matching them with PFS2 results.
+The <tt>aliases</tt> property consists of lists of names by which the
+plugin has been called, separated into exact matches (<tt>literal</tt>) and
+regular expressions for pattern matches (<tt>regex</tt>).  Since plugins change
+names between releases, and provide little else in the way of uniquely
+identifying details, these lists are meant to assist in identifying plugins
+already installed and matching them with PFS2 results.
 
 For example:
 
-    {
-        "adobe-flash-player": {
+    [
+        {
             "aliases": [
-                "/.*Flash.*/", 
-                "Adobe Flash Player", 
-                "Shockwave Flash"
+                "literal": [
+                    "Adobe Flash Player", 
+                    "Shockwave Flash"
+                ],
+                "regex": [
+                    ".*Flash.*"
+                ]
             ],
             "releases": [ ... ]
         }
-    }
+    ]
+
+=== Plugin releases ===
+
+The <tt>releases</tt> property points to an object, itself with two properties:
+
+; <tt>latest</tt> : The latest release for the plugin known by PFS2
+; <tt>others</tt> : A list of other outdated and vulnerable releases of the plugin
 
 === Plugin release descriptions ===
 
-The <tt>releases</tt> property is an object whose properties are named for
-plugin versions, and whose property values are objects describing plugin
-releases.  Each of the plugin release description object may some or all of the
+Each of the plugin releases are described by objects bearing some or all of the
 following properties:
 
-; pfs_id : <tt>pfs_id</tt> of the plugin within PFS2
-; name : Name of the plugin
-; vendor : Name of the vendor providing the plugin
-; version : A dot-separated normalized version for the plugin, may differ from official vendor versioning scheme in order to maintain internal consistency in PFS2
-; guid : A GUID for the plugin release, may differ between releases and platforms (unlike <tt>pfs_id</tt>)
-; status : Current status of the release, eg. <tt>latest</tt>, <tt>outdated</tt>, <tt>vulnerable</tt>
-; vulnerability_description : For status <tt>vulnerable</tt>, a short description of security vulnerabilities for the plugin release
-; vulnerability_url : For status <tt>vulnerable</tt>, a URL detailing security vulnerabilities for the plugin release
-; filename : Filename of the plugin as installed
-; url : URL with details describing the plugin
-; license_url : URL where the license for using the plugin may be found
-; manual_installation_url : URL for a manually-launched executable installer for the plugin
-; xpi_location : URL for an XPI-based installer for the plugin
-; installer_location : URL for an executable installer for the plugin (mainly for Windows)
-; installer_hash : A hash of the installer's contents for verifying its integrity
-; installer_shows_ui : (0/1) whether or not the installer displays a user interface
-; needs_restart : (0/1) whether or not the OS needs to restart after plugin installation
-; xpcomabi : '''''(Not sure, inherited from PFS1, need a description)'''''
-; min : '''''(Not sure, inherited from PFS1, need a description)'''''
-; max : '''''(Not sure, inherited from PFS1, need a description)'''''
-; app_release : Client app release for which the plugin is intended (* is wildcard)
-; app_version : Client app version for which the plugin is intended (* is wildcard)
-; locale : Client app locale for which the plugin is intended (* is wildcard)
-; os_name : Client app OS for which the plugin is intended (* is wildcard)
-; modified : Timestamp when last the release record was modified
+; <tt>pfs_id</tt> : <tt>pfs_id</tt> of the plugin within PFS2
+; <tt>name</tt> : Name of the plugin
+; <tt>vendor</tt> : Name of the vendor providing the plugin
+; <tt>version</tt> : A dot-separated normalized version for the plugin, may differ from official vendor versioning scheme in order to maintain internal consistency in PFS2
+; <tt>guid</tt> : A GUID for the plugin release, may differ between releases and platforms (unlike <tt>pfs_id</tt>)
+; <tt>status</tt> : Current status of the release, eg. <tt>latest</tt>, <tt>outdated</tt>, <tt>vulnerable</tt>
+; <tt>vulnerability_description</tt> : For status <tt>vulnerable</tt>, a short description of security vulnerabilities for the plugin release
+; <tt>vulnerability_url</tt> : For status <tt>vulnerable</tt>, a URL detailing security vulnerabilities for the plugin release
+; <tt>filename</tt> : Filename of the plugin as installed
+; <tt>url</tt> : URL with details describing the plugin
+; <tt>license_url</tt> : URL where the license for using the plugin may be found
+; <tt>manual_installation_url</tt> : URL for a manually-launched executable installer for the plugin
+; <tt>xpi_location</tt> : URL for an XPI-based installer for the plugin
+; <tt>installer_location</tt> : URL for an executable installer for the plugin (mainly for Windows)
+; <tt>installer_hash</tt> : A hash of the installer's contents for verifying its integrity
+; <tt>installer_shows_ui</tt> : (0/1) whether or not the installer displays a user interface
+; <tt>needs_restart</tt> : (0/1) whether or not the OS needs to restart after plugin installation
+; <tt>xpcomabi</tt> : '''''(Not sure, inherited from PFS1, need a description)'''''
+; <tt>min</tt> : '''''(Not sure, inherited from PFS1, need a description)'''''
+; <tt>max</tt> : '''''(Not sure, inherited from PFS1, need a description)'''''
+; <tt>app_release</tt> : Client app release for which the plugin is intended (* is wildcard)
+; <tt>app_version</tt> : Client app version for which the plugin is intended (* is wildcard)
+; <tt>locale</tt> : Client app locale for which the plugin is intended (* is wildcard)
+; <tt>os_name</tt> : Client app OS for which the plugin is intended (* is wildcard)
+; <tt>modified</tt> : Timestamp when last the release record was modified
 
 === Example response === 
 
     $ curl -s 'http://dev.pfs2.mozilla.org/?mimetype=application/x-shockwave-flash&appID=%7Bec8030f7-c20a-464f-9b0e-13a3a9e97384%7D&appVersion=2008052906&appRelease=3.5&clientOS=mac&chromeLocale=ja-JP'
     
-    {
-        "adobe-flash-player": {
+    [
+        {
+            "aliases": {
+                "literal": [
+                    "Adobe Flash Player", 
+                    "Shockwave Flash"
+                ],
+                "regex": [
+                    ".*Flash.*"
+                ] 
+            },
             "releases": {
-                "11.0.0.0": {
+                "latest": {
                     "status": "latest", 
                     "app_release": "3.5", 
                     "app_version": "*", 
                     "vendor": "Adobe", 
                     "pfs_id": "adobe-flash-player", 
                     "url": "http://www.adobe.com/go/getflashplayer", 
-                    "modified": "2009-09-16T00:58:39+00:00", 
+                    "modified": "2009-09-18T23:09:55+00:00", 
                     "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}", 
                     "locale": "ja-JP", 
                     "version": "11.0.0.0", 
@@ -165,31 +182,121 @@ following properties:
                     "xpi_location": "http://fpdownload.macromedia.com/get/flashplayer/xpi/current/flashplayer-mac.xpi", 
                     "os_name": "mac", 
                     "name": "Adobe Flash Player"
-                }, 
-                "10.0.32.18": {
-                    "status": "vulnerable", 
-                    "app_release": "3.5", 
-                    "app_version": "*", 
-                    "vendor": "Adobe", 
-                    "pfs_id": "adobe-flash-player", 
-                    "url": "http://www.adobe.com/go/getflashplayer", 
-                    "modified": "2009-09-16T00:58:39+00:00", 
-                    "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}", 
-                    "vulnerability_description": "Makes your computer kick puppies", 
-                    "vulnerability_url": "http://google.com", 
-                    "version": "10.0.32.18", 
-                    "license_url": "http://www.adobe.com/go/eula_flashplayer_jp", 
-                    "locale": "ja-JP", 
-                    "guid": "{89977581-9028-4be0-b151-7c4f9bcd3211}", 
-                    "xpi_location": "http://fpdownload.macromedia.com/get/flashplayer/xpi/current/flashplayer-mac.xpi", 
-                    "os_name": "mac", 
-                    "name": "Adobe Flash Player"
-                }
-            }, 
-            "aliases": [
-                "/.*Flash.*/", 
-                "Adobe Flash Player", 
-                "Shockwave Flash"
-            ]
+                },
+                "others": [
+                    {
+                        "status": "vulnerable", 
+                        "app_release": "*", 
+                        "os_name": "*", 
+                        "vendor": "Adobe", 
+                        "pfs_id": "adobe-flash-player", 
+                        "url": "http://www.adobe.com/go/getflashplayer", 
+                        "modified": "2009-09-18T23:09:55+00:00", 
+                        "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}", 
+                        "vulnerability_url": "http://www.adobe.com/support/security/bulletins/apsb09-10.html", 
+                        "version": "9.0.159.0", 
+                        "license_url": "http://www.adobe.com/go/eula_flashplayer", 
+                        "locale": "*", 
+                        "app_version": "*", 
+                        "name": "Adobe Flash Player"
+                    }, 
+                    {
+                        "status": "vulnerable", 
+                        "app_release": "*", 
+                        "os_name": "*", 
+                        "vendor": "Adobe", 
+                        "pfs_id": "adobe-flash-player", 
+                        "url": "http://www.adobe.com/go/getflashplayer", 
+                        "modified": "2009-09-18T23:09:55+00:00", 
+                        "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}", 
+                        "vulnerability_url": "http://documents.iss.net/whitepapers/IBM_X-Force_WP_final.pdf", 
+                        "version": "9.0.115.0", 
+                        "license_url": "http://www.adobe.com/go/eula_flashplayer", 
+                        "locale": "*", 
+                        "app_version": "*", 
+                        "name": "Adobe Flash Player"
+                    }
+                ]
+            }
         }
-    }
+    ]
+
+= Client =
+
+== Codebases ==
+* [http://svn.mozilla.org/projects/mozilla.com/ mozilla.com]
+* [http://github.com/ozten/Perfidies-of-the-Web/tree Perfidies of the Web]
+
+Perfidies is the PFS2 client. It will be usable for plugin page, web badges, etc.
+
+== PFS2 inputs ==
+* App ID is hardcoded in the JS. We'll update this script when a new appId is available. Firefox always uses the same app id and it won't change any time soon.
+* appID={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
+* mimetype - navigator.plugins[x].type roughly
+* appVersion = navigator.buildid roughly
+* appRelease = navigator.appVersion roughly
+* clientOS = navigator.oscpu roughly
+* chromeLocale = navigator.language
+
+== Environments ==
+* dev - I have a dev instance up
+* trunk - https://www-trunk.stage.mozilla.com/
+* stage - https://www.authstage.mozilla.com/
+* prod - http://www.mozilla.com/
+
+= General Algorithm =
+# Taking all the plugins in the browser
+# For each Plugin
+## Take all the mime-types in the plugin
+## For each mime type
+### Find The Plugin from the service by mime-type and other parameters
+#### Take all the plugin infos which is the response
+#### For each info
+##### Try to match the `name` in the response to the plugins name
+###### if there is a match, use the info from this mime-type. Check version and vulnerability
+###### else if there is no match, continue with the next mimetype
+###### if all mime-types are exausted and no plugin name is matched, then this plugin is 'unknown', continue with next plugin
+
+== Matching info name to plugin name ==
+This is a fragile piece of the algorithm. The PFS2 server has a 'name' field in the response. The client will try to match this against
+# plugin.name
+
+A match will be if the name appears anywhere within these feilds. Example good match:
+  info { name: "Flash" }
+  plugins: [{name: "Adobe Flash 10.0.0.31"}]
+
+'''Question''': Do we want to have the results return a list of known names? Or how can we make this more betterish?
+
+== Quantity of calls per plugin ==
+Some plugins like Quicktime register 76 plugins. We'll want to have them all in the DB, so the first call by mime-type matches.
+
+Some Java Plugins like apples register many mime-types, because the mime-type includes platform version information like:
+
+  application/x-java-applet;version=1.3
+  application/x-java-applet;version=1.5
+
+We can normalize these, since ; isn't a valid character in a MIME type.
+
+== Current, Out Dated, Vulnerable, or Unknown ==
+These are the states of a plugin.
+
+[https://bugzilla.mozilla.org/show_bug.cgi?id=514004 We need to spec out the vulnerability mechanism]
+
+Current vs Out of date compares version components from left to right. Example:
+5.10.3 compared to 5.11
+# explode verison on '.'
+# compare 5 to 5
+# compare 10 to 11, 5.11 is higher
+
+Unknown
+
+The client library will record unknown plugins by requesting a well known 1 pixel image and encode the plugin info into the request. These details can be harvested from web logs in a low tech way in bulk, at our leisure to discover popular plugins not in the DB.
+
+= Related Information =
+* https://wiki.mozilla.org/Plugins:PluginCheck
+* https://wiki.mozilla.org/Firefox/Projects/Plugin_Update_Referrals
+* https://wiki.mozilla.org/Website/Sprints/PluginProblem
+* https://wiki.mozilla.org/Security:ThePluginProblem
+* https://bugzilla.mozilla.org/show_bug.cgi?id=465898 -
+* http://theunfocused.net/2009/08/22/status-update-2/
+
