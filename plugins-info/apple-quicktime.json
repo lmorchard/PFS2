@@ -11,7 +11,7 @@
         "name": "Apple Quicktime"
     }, 
     "aliases": {
-        "regex": [ ".*Quicktime.*" ]
+        "regex": [ ".*QuickTime.*" ]
     },
     "releases": [
         {

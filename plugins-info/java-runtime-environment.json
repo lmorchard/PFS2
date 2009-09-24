@@ -9,9 +9,9 @@
         "url": "http://java.com/firefoxjre", 
         "manual_installation_url": "http://java.com/firefoxjre"
     }, 
-    "aliases": [
-        "\/Java Embedding Plugin.*\/"
-    ],
+    "aliases": {
+        "regex": [ "Java Embedding Plugin .*" ]
+    },
     "releases": [
         {
             "version": "1.5.0.19",
