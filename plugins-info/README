@@ -6,9 +6,16 @@ This directory contains plugin definitions expressed in JSON.
 The top level structure of these JSON files look like so:
 
 {
-    "meta": { ... },
-    "releases": [ ... ],
-    "mimes": [ ... ]
+    "meta": {
+    },
+    "aliases": {
+        "literal": [],
+        "regex": []
+    },
+    "mimes": [
+    ],
+    "releases": [
+    ]
 }
 
 The "meta" object is an overall description for the plugin across all of its

@@ -1,0 +1,34 @@
+{
+    "meta": {
+        "pfs_id": "shockwave-director",
+        "name": "Shockwave for Director",
+        "description": "Adobe Shockwave for Director Netscape plug-in, version 11.5",
+        "vendor": "Adobe",
+        "platform": {
+            "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+        },
+        "license_url": "http://www.adobe.com/products/eulas/players/shockwave",
+        "url": "http://get.adobe.com/shockwave/"
+    },
+    "aliases": {
+        "literal": [],
+        "regex": []
+    },
+    "mimes": [
+        "application/x-director"
+    ],
+    "releases": [
+        {
+            "os": "mac",
+            "version": "11.5.1.601",
+            "filename": "DirectorShockwave.plugin",
+            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg"
+        },
+        {
+            "os": "win",
+            "version": "11.5.1.601",
+            "filename": "np32dsw.dll",
+            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/win95nt/latest/Shockwave_Installer_Slim.exe"
+        }
+    ]
+}
