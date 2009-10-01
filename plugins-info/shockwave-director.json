@@ -20,6 +20,13 @@
     "releases": [
         {
             "os": "mac",
+            "version": "11.5.1",
+            "filename": "DirectorShockwave.plugin",
+            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg",
+            "status": "latest"
+        },
+        {
+            "os": "mac",
             "version": "11.5.1.601",
             "filename": "DirectorShockwave.plugin",
             "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg"
