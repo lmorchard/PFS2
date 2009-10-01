@@ -10,11 +10,11 @@
         "version": "6"
     },
     "aliases": {
-        "literal": ["IcedTea Java Web Browser Plugin"],
+        "literal": ["iPhotoPhotocast"],
         "regex": []
     },
     "mimes": [
-         "application/x-java-vm", "application/x-java-applet"
+         "application/photo"
     ],
     "releases": [
         {
