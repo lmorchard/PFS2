@@ -11,7 +11,7 @@
         "url": "http://get.adobe.com/shockwave/"
     },
     "aliases": {
-        "literal": [],
+        "literal": ["Shockwave for Director"],
         "regex": []
     },
     "mimes": [
@@ -36,6 +36,10 @@
             "version": "11.5.1.601",
             "filename": "np32dsw.dll",
             "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/win95nt/latest/Shockwave_Installer_Slim.exe"
+        },
+        {
+            "os": "*",
+            "version": "10.1",
         }
     ]
 }
