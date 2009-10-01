@@ -1,0 +1,25 @@
+{
+    "meta": {
+        "pfs_id": "apple-iphoto-photocast",
+        "name":"iPhotoPhotocast",
+        "vendor": "Apple Computers",
+        "platform": {
+            "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+        },
+        "url": "http://www.apple.com/ilife/iphoto/",
+        "version": "6"
+    },
+    "aliases": {
+        "literal": ["IcedTea Java Web Browser Plugin"],
+        "regex": []
+    },
+    "mimes": [
+         "application/x-java-vm", "application/x-java-applet"
+    ],
+    "releases": [
+        {
+            "os": "*",
+            "version": "6"
+        }
+    ]
+}
