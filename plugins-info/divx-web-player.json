@@ -19,8 +19,22 @@
     ],
     "releases": [
         {
+            "os": "win",
+            "version": "1.5",
+            "url": "http://www.divx.com/en/web-player-windows"
+        },
+        {
+            "os": "mac",
+            "version": "1.5"
+            "url": "http://www.divx.com/en/products/software/mac/divx"
+        },
+        {
             "os": "*",
             "version": "1.4.1.4"
+        },
+        {
+            "os": "*",
+            "version": "1.4.0.233"
         }
     ]
 }
