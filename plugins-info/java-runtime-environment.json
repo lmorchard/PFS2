@@ -6,7 +6,7 @@
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         }, 
-        "url": "http://java.com/firefoxjre", 
+        "url": "http://www.java.com/en/download/manual.jsp", 
         "manual_installation_url": "http://java.com/firefoxjre"
     }, 
     "aliases": {
@@ -19,12 +19,14 @@
             "guid": "{fbe640ef-4375-4f45-8d79-767d60bf75b8}", 
             "installer_hash": "sha1:89a78d34a36d7e25cc32b1a507a2cd6fb87dd40a", 
             "needs_restart": "false", 
-            "os_name": "windows nt 6.0"
+            "os_name": "windows nt 6.0",
+            "url": "http://www.java.com/en/download/manual.jsp"
         }, 
         {
             "version": "1.5.0.19",
             "guid": "{fbe640ef-4375-4f45-8d79-767d60bf75b8}", 
-            "os_name": "*"
+            "os_name": "*",
+            "url": "http://www.java.com/en/download/manual.jsp"
         }
     ], 
     "mimes": [
