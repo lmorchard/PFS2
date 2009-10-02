@@ -39,7 +39,8 @@
         },
         {
             "os": "*",
-            "version": "10.1"
+            "version": "10.1",
+            "status": "outdated"
         }
     ]
 }

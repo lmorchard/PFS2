@@ -22,7 +22,8 @@
         {
             "version": "1.0.0.8",
             "manual_installation_url": "http://port25.technet.com/videos/downloads/wmpfirefoxplugin.exe",
-            "os": "win"
+            "os": "win",
+            "status": "latest"
         }
     ]
 }

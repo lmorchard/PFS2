@@ -6,8 +6,7 @@
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         },
-        "url": "http://icedtea.classpath.org/wiki/Main_Page",
-        "version": "1.6.0.0"
+        "url": "http://icedtea.classpath.org/wiki/Main_Page"
     },
     "aliases": {
         "literal": ["IcedTea Java Web Browser Plugin"],
@@ -19,7 +18,8 @@
     "releases": [
         {
             "os": "*",
-            "version": "1.6.0.0"
+            "version": "1.6.0.0",
+            "status": "outdated"
         }
     ]
 }

@@ -6,8 +6,7 @@
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         },
-        "url": "http://projects.gnome.org/totem/",
-        "version": "2.26.3"
+        "url": "http://projects.gnome.org/totem/"        
     },
     "aliases": {
         "literal": ["QuickTime Plug-in"],
@@ -22,11 +21,13 @@
     "releases": [
         {
             "os": "linux",
-            "version": "2.26.3"
+            "version": "2.26.3",
+            "status": "latest"
         },
         {
             "os": "linux",
-            "version": "2.26.1"
+            "version": "2.26.1",
+            "status": "outdated"
         }
     ]
 }

@@ -6,9 +6,7 @@
         "vendor": "DivX, Inc",
         "platform": {
             "app_id": "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
-        },
-        "url": "http://www.divx.com/en/web-player-windows",
-        "version": "1.5.0"
+        }
     },
     "aliases": {
         "literal": ["DivX Web Player"],
@@ -21,20 +19,24 @@
         {
             "os": "win",
             "version": "1.5",
-            "url": "http://www.divx.com/en/web-player-windows"
+            "url": "http://www.divx.com/en/web-player-windows",
+            "status": "latest"
         },
         {
             "os": "mac",
             "version": "1.5",
-            "url": "http://www.divx.com/en/products/software/mac/divx"
+            "url": "http://www.divx.com/en/products/software/mac/divx",
+            "status": "latest"
         },
         {
             "os": "*",
-            "version": "1.4.1.4"
+            "version": "1.4.1.4",
+            "status": "outdated"
         },
         {
             "os": "*",
-            "version": "1.4.0.233"
+            "version": "1.4.0.233",
+            "status": "outdated"
         }
     ]
 }
