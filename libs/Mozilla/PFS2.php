@@ -391,6 +391,12 @@ class Mozilla_PFS2 extends Mozilla_App
         if (preg_match('/^win/', $client_os)) {
             $list[] = 'win';
         }
+        if (preg_match('/^ppc mac os x/', $client_os)) {
+            $list[] = 'ppc mac os x';
+        }
+        if (preg_match('/^intel mac os x/', $client_os)) {
+            $list[] = 'intel mac os x';
+        }
         if (preg_match('/^(ppc|intel) mac os x/', $client_os)) {
             $list[] = 'mac os x';
             $list[] = 'mac';
