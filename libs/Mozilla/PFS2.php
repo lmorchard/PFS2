@@ -428,9 +428,13 @@ class Mozilla_PFS2 extends Mozilla_App
     }
 
     /**
-     * Load plugin into the database.
+     * Load plugin into the database by either updating existing info, or 
+     * deleting and replacing it.
+     *
+     * @param array|string plugin data as an array or JSON string
+     * @param boolean      delete the plugin by pfs_id before updating
      */
-    public function loadPlugin($plugin)
+    public function loadPlugin($plugin, $delete_first=TRUE)
     {
         if (is_string($plugin)) {
             $plugin = json_decode($plugin, true);
@@ -501,6 +505,16 @@ class Mozilla_PFS2 extends Mozilla_App
         );
 
         $meta = array_merge($meta_defaults, $plugin['meta']);
+
+        // If necessary, delete the plugin before inserting updates.
+        if ($delete_first) {
+            $this->db->prepareStatement(
+                "DELETE FROM plugins WHERE pfs_id=?", array('pfs_id')
+            )->execute_finish(array(
+                'pfs_id' => $meta['pfs_id']
+            ));
+        }
+
         $p_id = $plugin_insert->execute_finish($meta);
 
         if (!empty($plugin['mimes'])) foreach ($plugin['mimes'] as $mime) {

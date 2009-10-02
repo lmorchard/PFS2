@@ -82,7 +82,8 @@ CREATE TABLE `plugins_mimes` (
     `plugin_id` int(11) unsigned NOT NULL,
     `mime_id` int(11) unsigned NOT NULL,
     UNIQUE INDEX (`mime_id`,`plugin_id`),
-    PRIMARY KEY  (`id`)
+    PRIMARY KEY  (`id`),
+    FOREIGN KEY (`plugin_id`) REFERENCES plugins(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `plugin_aliases`;
