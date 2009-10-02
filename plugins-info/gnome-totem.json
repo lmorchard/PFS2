@@ -10,7 +10,7 @@
         "version": "2.26.3"
     },
     "aliases": {
-        "literal": ["QuickTime Plug-in"], /* Is this going to be a problem... */
+        "literal": ["QuickTime Plug-in"],
         "regex": []
     },
     "mimes": [
