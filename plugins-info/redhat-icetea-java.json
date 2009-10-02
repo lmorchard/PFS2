@@ -19,7 +19,7 @@
         {
             "os": "*",
             "version": "1.6.0.0",
-            "status": "outdated"
+            "status": "latest"
         }
     ]
 }
