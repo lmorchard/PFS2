@@ -90,11 +90,13 @@ class Mozilla_PFS2 extends Mozilla_App
                 'vendor', 'url', 'icon_url', 'license_url',
             ),
             'plugin_releases' => array(
+                'name', 'description', 'vendor',
                 'vulnerability_url', 'vulnerability_description',
                 'status_code', 'guid', 'filename', 'version', 'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui', 
-                'manual_installation_url', 'license_url', 'needs_restart', 'min', 
-                'max', 'xpcomabi', 
+                'icon_url', 'url',
+                'manual_installation_url', 'license_url', 'needs_restart', 
+                'min', 'max', 'xpcomabi', 
                 'modified',
             ),
             'platforms' => array(
@@ -470,8 +472,11 @@ class Mozilla_PFS2 extends Mozilla_App
         $plugin_release_insert = $this->db->prepareInsertOrUpdate(
             'plugin_releases', array(
                 'plugin_id', 'os_id', 'platform_id', 
-                'status_code', 'guid', 'version', 'xpi_location',
+                'name', 'description', 'vendor',
+                'status_code', 'guid', 'version', 
+                'xpi_location',
                 'installer_location', 'installer_hash', 'installer_shows_ui',
+                'icon_url', 'url',
                 'manual_installation_url', 'license_url', 'needs_restart',
                 'min', 'max', 'xpcomabi', 
                 'vulnerability_url', 'vulnerability_description',
