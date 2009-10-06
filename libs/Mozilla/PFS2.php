@@ -128,9 +128,8 @@ class Mozilla_PFS2 extends Mozilla_App
         /*
          * Add client OS criteria to the SQL
          */
-        $client_oses = $this->db->escape(
-            $this->normalizeClientOS(@$criteria['clientOS'])
-        );
+        $criteria['clientOS'] = $this->normalizeClientOS(@$criteria['clientOS']);
+        $client_oses = $this->db->escape($criteria['clientOS']);
         $join[] = join(' ', array(
             "JOIN (`oses`)",
             "ON (`oses`.`id` = `plugin_releases`.`os_id`)"
@@ -287,15 +286,17 @@ class Mozilla_PFS2 extends Mozilla_App
                 );
             }
 
+            // Calculate relevance for current row
+            $row['relevance'] = $this->calcRelevance($row, $criteria);
+
             // Decide whether to store or ignore this release...
             if (empty($data[$pfs_id]['releases'][$version])) {
                 // Don't have a release for this version yet, so store it.
                 $data[$pfs_id]['releases'][$version] = $row;
             } else {
                 // Replace the release we have, if this new one is more relevant.
-                $curr_rel = $this->calcRelevance($data[$pfs_id]['releases'][$version]);
-                $new_rel = $this->calcRelevance($row);
-                if ($new_rel > $curr_rel) {
+                $curr_rel = $data[$pfs_id]['releases'][$version]['relevance'];
+                if ($row['relevance'] > $curr_rel) {
                     $data[$pfs_id]['releases'][$version] = $row;
                 }
             }
@@ -343,26 +344,24 @@ class Mozilla_PFS2 extends Mozilla_App
         $flat = array();
         foreach ($data as $pfs_id => $plugin) {
 
-            $releases = array(
+            $rs = array(
                 'latest' => null,
                 'others' => array()
             );
 
-            foreach ($plugin['releases'] as $version => $release) {
-                if ('latest'==$release['status'] && (
-                            !$releases['latest'] ||
-                            // TODO: Use better version comparison here?
-                            // Shouldn't ever really matter, since only one release
-                            // should ever be marked as latest in the DB
-                            $version > $releases['latest']['version']
-                        )) {
-                    $releases['latest'] = $release;
+            // Comb through releases to find most relevant latest, collect the 
+            // rest under 'others'
+            foreach ($plugin['releases'] as $version => $r) {
+                if ('latest' == $r['status']) {
+                   if (!$rs['latest'] || $r['relevance'] > $rs['latest']['relevance']) {
+                        $rs['latest'] = $r;
+                    }
                 } else {
-                    $releases['others'][] = $release;
+                    $rs['others'][] = $r;
                 }
             }
 
-            $plugin['releases'] = $releases;
+            $plugin['releases'] = $rs;
             $flat[] = $plugin;
 
         }
@@ -421,15 +420,30 @@ class Mozilla_PFS2 extends Mozilla_App
     }
 
     /**
-     * Calculate result relevance, based on the number of OS / Platform columns 
-     * that are not wildcards.
+     * Calculate result relevance based on the criteria values.
      */
-    public function calcRelevance($row) {
+    public function calcRelevance($row, $criteria) {
         $rel = 0;
+        
+        // First, bump relevance where the match was not a wildcard
         $cols = array('os_name', 'app_id', 'app_release', 'app_version', 'locale');
         foreach ($cols as $name) {
             if ('*' !== $row[$name]) $rel++;
         }
+
+        // Next, bump the relevance by how close to the top of the list of 
+        // normalized client OS alternatives the row's value matches.
+        if (!empty($row['os_name']) && !empty($criteria['clientOS'])) {
+            foreach ($criteria['clientOS'] as $idx => $c_name) {
+                if ($c_name === $row['os_name']) {
+                    $rel += (count($criteria['clientOS']) - $idx);
+                    break;
+                }
+            }
+        }
+
+        // TODO: Support lists of locales in the same way as OS
+
         return $rel;
     }
 
@@ -540,7 +554,7 @@ class Mozilla_PFS2 extends Mozilla_App
             $release = array_merge($release_defaults, $meta, $release);
             $release['plugin_id'] = $p_id;
 
-            $os_id = $os_lookup->fetch_col(array(
+            $os_id = $oses_insert->execute_finish(array(
                 'name'=>$release['os_name']
             ));
             $release['os_id'] = $os_id;

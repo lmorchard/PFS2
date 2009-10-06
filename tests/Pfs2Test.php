@@ -169,15 +169,6 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
         $this->assertEquals('100.2.6', $releases['latest']['version'],
             'Latest version should be present and match.');
 
-        // Verify the names for expected versions
-        foreach (array('99.9.9', '100.2.6') as $version) {
-            $this->assertEquals(
-                'Foobar Media Viewer', 
-                $versions[$version]['name'],
-                'Plugin should be named correctly'
-            );
-        }
-
         // Verify the GUIDs and statuses
         $this->assertEquals('foobar-win-100.2.6', 
             $versions['100.2.6']['guid']);
@@ -187,6 +178,11 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
             $versions['99.9.9']['guid']);
         $this->assertEquals('vulnerable', 
             $versions['99.9.9']['status']);
+
+        $this->assertEquals('Foobar Media Viewer',
+            $versions['100.2.6']['name']);
+        $this->assertEquals('Horribly Broken Media Viewer',
+            $versions['99.9.9']['name']);
 
         // Now, switch to Mac and expect one of the plugins to change.
         $criteria['clientOS'] = 'Intel Mac OS X 10.5';
@@ -200,17 +196,15 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
         $this->assertTrue( !empty($versions['100.2.6']),
             'Release v100.2.6 of "foobar-media" should be returned');
 
-        foreach (array('99.9.9', '100.2.6') as $version) {
-            $this->assertEquals(
-                'Foobar Media Viewer', 
-                $versions[$version]['name'],
-                'Plugin should be named correctly'
-            );
-        }
         $this->assertEquals('foobar-mac-100.2.6', 
             $versions['100.2.6']['guid']);
+        $this->assertEquals('Foobar Media Viewer',
+            $versions['100.2.6']['name']);
+
         $this->assertEquals('foobar-bad-99.9.9', 
             $versions['99.9.9']['guid']);
+        $this->assertEquals('Horribly Broken Media Viewer',
+            $versions['99.9.9']['name']);
 
         // Now get specific with locale and expect the Mac release to change again.
         $criteria['chromeLocale'] = 'ja-JP';
@@ -224,6 +218,9 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
 
     }
 
+    /**
+     * Try updating without deleting
+     */
     public function testLaterUpdatesShouldWork()
     {
         $plugin_update = array(
@@ -264,7 +261,7 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
                 ),
             )
         );
-        $this->pfs2->loadPlugin($plugin_update);
+        $this->pfs2->loadPlugin($plugin_update, FALSE);
 
         foreach (array( 'Windows NT 5.1', 'Intel Mac OS X 10.5', 'React OS' ) as $os_name ) {
 
@@ -315,7 +312,105 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
 
         }
     }
+
+    /**
+     * Exercise relevant matches on exact and fuzzy OS name matches
+     */
+    public function testOSRelevance()
+    {
+        $plugin_update = array(
+            'meta' => array(
+                'pfs_id'   => 'foobar-media',
+                'name'     => 'Foobar Media Viewer',
+                'vendor'   => 'Foobar',
+                'filename' => 'foobar.plugin',
+                'platform' => array(
+                    "app_id" => "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+                )
+            ),
+            'aliases' => array(
+                'Super Happy Future Viewer',
+                'Foobar Corporation Viewer of Media',
+            ),
+            'mimes' => array(
+                'audio/x-foobar-audio',
+                'video/x-foobar-video'
+            ),
+            'releases' => array(
+                array(
+                    'version' => '200.9.9',
+                    'guid'    => 'foobar-win-200.9.9',
+                    'os_name' => 'win',
+                    'installer_location' => 'http://example.com/foobar/win-200.exe',
+                ),
+                array(
+                    'version' => '200.9.9',
+                    'guid'    => 'foobar-win-vista-200.9.9',
+                    'os_name' => 'windows vista',
+                    'installer_location' => 'http://example.com/foobar/win-200.exe',
+                ),
+                array(
+                    'version' => '200.9.9',
+                    'guid'    => 'foobar-intel-mac-os-x-10.6-200.9.9',
+                    'os_name' => 'intel mac os x 10.6',
+                    'installer_location' => 'http://example.com/foobar/mac.dmg',
+                ),
+                array(
+                    'version' => '200.9.9',
+                    'guid'    => 'foobar-intel-mac-os-x-10.5-200.9.9',
+                    'os_name' => 'intel mac os x 10.5',
+                    'installer_location' => 'http://example.com/foobar/mac.dmg',
+                ),
+                array(
+                    'version' => '200.9.9',
+                    'guid'    => 'foobar-mac-200.9.9',
+                    'os_name' => 'mac',
+                    'installer_location' => 'http://example.com/foobar/mac.dmg',
+                ),
+                array(
+                    'version' => '200.9.9',
+                    'guid'    => 'foobar-other-200.9.9',
+                    'installer_location' => 'http://example.com/foobar/others.zip',
+                ),
+            )
+        );
+        $this->pfs2->loadPlugin($plugin_update, FALSE);
+
+        $os_guid_map = array(
+            'Windows 98'          => 'foobar-win-200.9.9',
+            'Windows NT 6.0'      => 'foobar-win-vista-200.9.9',
+            'Intel Mac OS X 10.4' => 'foobar-mac-200.9.9', 
+            'Intel Mac OS X 10.5' => 'foobar-intel-mac-os-x-10.5-200.9.9', 
+            'Intel Mac OS X 10.6' => 'foobar-intel-mac-os-x-10.6-200.9.9',
+            'React OS 11.92'      => 'foobar-other-200.9.9'
+        );
+
+        foreach ($os_guid_map as $os_name => $expected_guid) {
+
+            // Try some criteria for which results are expected:
+            $criteria = array(
+                'appID'        => '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}',
+                'mimetype'     => array(
+                    'audio/x-foobar-audio',
+                    'video/x-foobar-video'
+                ),
+                'appVersion'   => '2008052906',
+                'appRelease'   => '3.5',
+                'clientOS'     => $os_name,
+                'chromeLocale' => 'en-US'
+            );
+
+            list($results, $result, $releases, $versions) = 
+                $this->lookupAndExtract($criteria);
+
+            $this->assertEquals($expected_guid,
+                $releases['latest']['guid']);
+
+        }
+
+    }
     
+
     /**
      * Perform a PFS2 lookup and extract some frequently used info.
      */

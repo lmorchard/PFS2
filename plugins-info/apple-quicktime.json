@@ -13,6 +13,12 @@
         "regex": [ ".*QuickTime.*" ]
     },
     "releases": [
+        { 
+            "version": "7.6.3.0",
+            "guid": "{a42bb825-7eee-420f-8ee7-834062b6fefd}", 
+            "os_name": "intel mac os x 10.6",
+            "status": "latest"
+        },    
         {
             "version": "7.6.4.0",
             "guid": "{a42bb825-7eee-420f-8ee7-834062b6fefd}", 
