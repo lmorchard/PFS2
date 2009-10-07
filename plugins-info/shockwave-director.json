@@ -12,7 +12,7 @@
     },
     "aliases": {
         "literal": ["Shockwave for Director"],
-        "regex": []
+        "regex": [".*Shockwave for Director.*"]
     },
     "mimes": [
         "application/x-director"
@@ -20,22 +20,19 @@
     "releases": [
         {
             "os": "mac",
-            "version": "11.5.1",
+            "version": "11.5",
             "filename": "DirectorShockwave.plugin",
-            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg",
+            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg",            
+            "url": "http://www.adobe.com/products/shockwaveplayer/",
             "status": "latest"
         },
         {
-            "os": "mac",
-            "version": "11.5.1.601",
-            "filename": "DirectorShockwave.plugin",
-            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg"
-        },
-        {
             "os": "win",
-            "version": "11.5.1.601",
+            "version": "11.5",
             "filename": "np32dsw.dll",
-            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/win95nt/latest/Shockwave_Installer_Slim.exe"
+            "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/win95nt/latest/Shockwave_Installer_Slim.exe",
+            "url": "http://www.adobe.com/products/shockwaveplayer/",
+            "status": "latest"
         },
         {
             "os": "*",
