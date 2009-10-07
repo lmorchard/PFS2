@@ -17,7 +17,7 @@
     ],
     "releases": [
         {
-            "os": "*",
+            "os_name": "*",
             "version": "6",
             "status": "latest"
         }

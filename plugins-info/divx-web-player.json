@@ -17,24 +17,24 @@
     ],
     "releases": [
         {
-            "os": "win",
+            "os_name": "win",
             "version": "1.5",
             "url": "http://www.divx.com/en/web-player-windows",
             "status": "latest"
         },
         {
-            "os": "mac",
+            "os_name": "mac",
             "version": "1.5",
             "url": "http://www.divx.com/en/products/software/mac/divx",
             "status": "latest"
         },
         {
-            "os": "*",
+            "os_name": "*",
             "version": "1.4.1.4",
             "status": "outdated"
         },
         {
-            "os": "*",
+            "os_name": "*",
             "version": "1.4.0.233",
             "status": "outdated"
         }

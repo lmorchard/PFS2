@@ -17,13 +17,13 @@
     ],
     "releases": [
         {
-            "os": "win",
+            "os_name": "win",
             "version": "3.0.40818.0",
             "filename": "npctrl.dll",
             "manual_installation_url": "http://silverlight.dlservice.microsoft.com/download/C/5/B/C5BB5CD8-E871-49AC-8A40-61010E1FD1CF/Silverlight.exe"
         },
         {
-            "os": "mac",
+            "os_name": "mac",
             "version": "3.0.40818.0",
             "filename": "Silverlight.plugin"
         }

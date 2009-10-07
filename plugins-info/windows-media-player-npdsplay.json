@@ -20,7 +20,7 @@
     "releases": [
         {
             "version": "3.0.2.629",
-            "os": "win",
+            "os_name": "win",
             "status": "latest"
         }
     ]

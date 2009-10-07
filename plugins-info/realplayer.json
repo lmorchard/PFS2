@@ -17,14 +17,14 @@
     ],
     "releases": [
         {
-            "os": "win",
+            "os_name": "win",
             "version": "6.0.12.448",
             "name": "RealPlayer Version Plugin",
             "filename": "nprpjplug.dll",
             "manual_installation_url": "http://software-download.real.com/26edeb6dd3ffcc2b7722/windows/installer/stubinst/stub/rp11/R41RD01/RealPlayer11GOLD.exe"
         },
         {
-            "os": "mac",
+            "os_name": "mac",
             "version": "0.0.1d1",
             "name": "RealPlayer Plugin.plugin",
             "filename": "RealPlayer Plugin.plugin",

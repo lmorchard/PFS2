@@ -18,17 +18,17 @@
     ],
     "releases": [
         {
-            "os": "*",
+            "os_name": "*",
             "version": "2.2.3",
             "status": "latest"
         },
         {
-            "os": "*",
+            "os_name": "*",
             "version": "2.2.1",
             "status": "outdated"
         },
         {
-            "os": "*",
+            "os_name": "*",
             "version": "2.1.2",
             "status": "outdated"
         }

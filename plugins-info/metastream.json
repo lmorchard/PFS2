@@ -18,7 +18,7 @@
     ],
     "releases": [
         {
-            "os": "win",
+            "os_name": "win",
             "version": "3.6.0.59",
             "filename": "npViewpoint.dll",
             "manual_installation_url": "https://components.viewpoint.com/MTSInstallers/archive/vmp_full_installer_.exe"

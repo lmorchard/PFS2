@@ -19,7 +19,7 @@
     ],
     "releases": [
         {
-            "os": "mac",
+            "os_name": "mac",
             "version": "11.5",
             "filename": "DirectorShockwave.plugin",
             "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/macosx/latest/Shockwave_Installer_Slim.dmg",            
@@ -27,7 +27,7 @@
             "status": "latest"
         },
         {
-            "os": "win",
+            "os_name": "win",
             "version": "11.5",
             "filename": "np32dsw.dll",
             "manual_installation_url": "http://fpdownload.macromedia.com/get/shockwave/default/english/win95nt/latest/Shockwave_Installer_Slim.exe",
@@ -35,7 +35,7 @@
             "status": "latest"
         },
         {
-            "os": "*",
+            "os_name": "*",
             "version": "10.1",
             "status": "outdated"
         }

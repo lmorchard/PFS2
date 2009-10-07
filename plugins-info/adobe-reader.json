@@ -24,7 +24,7 @@
         {
             "status": "latest",
             "version": "9.1.0.163",
-            "os": "win"
+            "os_name": "win"
         }
     ]
 }

@@ -20,12 +20,12 @@
     ],
     "releases": [
         {
-            "os": "linux",
+            "os_name": "linux",
             "version": "2.26.3",
             "status": "latest"
         },
         {
-            "os": "linux",
+            "os_name": "linux",
             "version": "2.26.1",
             "status": "outdated"
         }
