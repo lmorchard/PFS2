@@ -98,7 +98,10 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
         $results = $this->pfs2->lookup(array(
             'appID'    => '{abcdef123456789}',
             'mimetype' => 'audio/x-foobar-audio',
-            'clientOS' => 'ReactOS 23.42'
+            'clientOS' => 'ReactOS 23.42',
+            'appVersion'   => '20090810',
+            'appRelease'   => '3.5',
+            'chromeLocale' => 'en-US'
         ));
         $this->assertTrue(empty($results),
             "There should be no plugin for clientOS ReactOS 23.42");
@@ -107,7 +110,10 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
         $results = $this->pfs2->lookup(array(
             'appID'    => '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}',
             'mimetype' => 'application/x-xyzzy-animation',
-            'clientOS' => 'win'
+            'clientOS' => 'win',
+            'appVersion'   => '20090810',
+            'appRelease'   => '3.5',
+            'chromeLocale' => 'en-US'
         ));
         $this->assertTrue(empty($results),
             "There should be no plugin for application/x-xyzzy-animation");
@@ -395,7 +401,7 @@ class Pfs2Test extends PHPUnit_Framework_TestCase
                     'video/x-foobar-video'
                 ),
                 'appVersion'   => '2008052906',
-                'appRelease'   => '3.5',
+                'appRelease'   => '3.0',
                 'clientOS'     => $os_name,
                 'chromeLocale' => 'en-US'
             );

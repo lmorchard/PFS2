@@ -35,8 +35,6 @@ class Mozilla_PFS2 extends Mozilla_App
             'callback' => ''
         ));
 
-        $params['mimetype'] = explode(' ', $params['mimetype']);
-
         $callback = $params['callback'];
         unset($params['callback']);
 
@@ -75,8 +73,24 @@ class Mozilla_PFS2 extends Mozilla_App
             'chromeLocale' => ''
         ), $criteria);
 
-        if (empty($criteria['mimetype']))
-            return NULL;
+        // Check to see if any of the other params are empty, causing a
+        // shortcircuit straight to empty results.
+        $req_empty = false;
+        foreach ($criteria as $name => $value) {
+            // All params are required at present
+            if (empty($value)) {
+                $req_empty = true; break;
+            }
+        }
+        if ($req_empty) {
+            // Missing required criteria, so punt.
+            // TODO: Respond with an error someday?
+            return array();
+        }
+
+        if (!is_array($criteria['mimetype'])) {
+            $criteria['mimetype'] = explode(' ', $criteria['mimetype']);
+        }
 
         $dbh = $this->db->getHandle(Database::SOURCE_SHADOW);
 
