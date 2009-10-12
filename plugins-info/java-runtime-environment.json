@@ -10,7 +10,7 @@
         "manual_installation_url": "http://java.com/firefoxjre"
     }, 
     "aliases": {
-        "regex": [ "Java Embedding Plugin .*" ]
+        "regex": [ "Java Embedding Plugin .*", "Java.* Platform SE.*" ]
     },
     "releases": [
         {
