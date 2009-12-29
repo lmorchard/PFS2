@@ -132,11 +132,13 @@ class Mozilla_PFS2_Database_Statement
     public function execute($fields) 
     {
         $types = str_repeat('s', count($this->field_names));
-        $args  = array( $types );
-        foreach ($this->field_names as $field){
-            $args[] = (isset($fields[$field])) ?  $fields[$field] : '';
+        $args  = array( $this->stmt, $types );
+        $nargs = array();
+        foreach ($this->field_names as $field) {
+            $nargs[$field] = (isset($fields[$field])) ?  $fields[$field] : '';
+            $args[] = &$nargs[$field];
         }
-        call_user_func_array(array($this->stmt, 'bind_param'), $args);
+        call_user_func_array('mysqli_stmt_bind_param', $args);
         return $this->stmt->execute() ? $this->stmt->insert_id : FALSE;
     }
 

@@ -239,7 +239,14 @@ class Mozilla_PFS2 extends Mozilla_App
          * Bind the input params, execute, and bind the result vars.
          */
         array_unshift($params, str_repeat('s', count($params)));
-        call_user_func_array(array($stmt, 'bind_param'), $params);
+        array_unshift($params, $stmt);
+
+        $args = array();
+        foreach ($params as $idx=>$param) {
+            $args[] = &$params[$idx];
+        }
+        call_user_func_array('mysqli_stmt_bind_param', $args);
+
         $rv = $stmt->execute();
         call_user_func_array(array($stmt, 'bind_result'), $results);
 
@@ -341,8 +348,14 @@ class Mozilla_PFS2 extends Mozilla_App
 
             // Execute the SQL with known pfs_ids
             array_unshift($params, str_repeat('s', count($params)));
-            call_user_func_array(array($aliases_lookup->stmt, 'bind_param'), $params);
-            $aliases_lookup->stmt->execute();
+            array_unshift($params, $aliases_lookup->stmt);
+
+            $args = array();
+            foreach ($params as $idx=>$param) {
+                $args[] = &$params[$idx];
+            }
+            call_user_func_array('mysqli_stmt_bind_param', $args);
+
             $aliases_lookup->stmt->bind_result($pfs_id, $alias, $is_regex);
 
             // Gather the aliases into the output.
@@ -617,29 +630,41 @@ class Mozilla_PFS2 extends Mozilla_App
             }
         }
 
-        // Mark all other non-vulnerable releases as outdated.
-        $params = array_merge(
-            array(
-                self::$status_codes['outdated'], 
-                self::$status_codes['vulnerable'], 
-                $p_id
-            ), 
-            $release_ids
-        );
-        $sql = join("\n", array(
-            'UPDATE `plugin_releases`',
-            'SET `status_code`=?',
-            'WHERE `plugin_releases`.`status_code` <> ? AND',
-            '      `plugin_releases`.`plugin_id` = ? AND',
-            '      `plugin_releases`.`id` ',
-            '           NOT IN ('.str_repeat('?,', count($params)-4).'?)',
-        ));
-        $update = $this->db->prepareStatement($sql, null);
+        if ($release_ids) {
 
-        array_unshift($params, str_repeat('s', count($params)));
-        call_user_func_array(array($update->stmt, 'bind_param'), $params);
-        $update->stmt->execute();
-        $update->finish();
+            // Mark all other non-vulnerable releases as outdated.
+            $sql = join("\n", array(
+                'UPDATE `plugin_releases`',
+                'SET `status_code`=?',
+                'WHERE `plugin_releases`.`status_code` <> ? AND',
+                '      `plugin_releases`.`plugin_id` = ? AND',
+                '      `plugin_releases`.`id` ',
+                '           NOT IN ('.str_repeat('?,', count($release_ids)-1).'?)',
+            ));
+            
+            $update = $this->db->prepareStatement($sql, null);
+
+            $params = array_merge(
+                array(
+                    $update->stmt,
+                    str_repeat('s', count($release_ids) + 3),
+                    self::$status_codes['outdated'], 
+                    self::$status_codes['vulnerable'], 
+                    $p_id
+                ), 
+                $release_ids
+            );
+
+            $args = array();
+            foreach ($params as $idx => $param) {
+                $args[] = &$params[$idx];
+            }
+            call_user_func_array('mysqli_stmt_bind_param', $args);
+
+            $update->stmt->execute();
+            $update->finish();
+
+        }
 
         return array($p_id, $release_ids);
     }
