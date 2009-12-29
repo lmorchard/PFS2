@@ -8,7 +8,7 @@
         }, 
         "url": "http://www.adobe.com/go/getflashplayer", 
         "license_url": "http://www.adobe.com/go/eula_flashplayer", 
-        "version": "10.0.32.0"
+        "version": "10.0.42.34"
     }, 
     "aliases": {
         "literal": [
@@ -113,9 +113,7 @@
             "license_url": "http://www.adobe.com/go/eula_flashplayer_jp", 
             "guid": "{89977581-9028-4be0-b151-7c4f9bcd3211}", 
             "xpi_location": "http://fpdownload.macromedia.com/get/flashplayer/xpi/current/flashplayer-mac.xpi", 
-            "os_name": "mac",
-            "vulnerability_url": "http://google.com",
-            "vulnerability_description": "Makes your computer kick puppies"
+            "os_name": "mac"
         }, 
         {
             "platform": {
