@@ -355,14 +355,13 @@ class Mozilla_PFS2 extends Mozilla_App
                 $args[] = &$params[$idx];
             }
             call_user_func_array('mysqli_stmt_bind_param', $args);
-
+            $aliases_lookup->stmt->execute();
             $aliases_lookup->stmt->bind_result($pfs_id, $alias, $is_regex);
 
             // Gather the aliases into the output.
             while ($aliases_lookup->stmt->fetch()) {
                 $data[$pfs_id]['aliases'][($is_regex) ? 'regex' : 'literal'][] = $alias;
             }
-
         }
 
         /*
