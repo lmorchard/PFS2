@@ -462,8 +462,9 @@ class Mozilla_PFS2 extends Mozilla_App
         // Next, bump the relevance by how close to the top of the list of 
         // normalized client OS alternatives the row's value matches.
         if (!empty($row['os_name']) && !empty($criteria['clientOS'])) {
+            $l_os_name = strtolower($row['os_name']);
             foreach ($criteria['clientOS'] as $idx => $c_name) {
-                if ($c_name === $row['os_name']) {
+                if ($c_name === $l_os_name) {
                     $rel += (count($criteria['clientOS']) - $idx);
                     break;
                 }
